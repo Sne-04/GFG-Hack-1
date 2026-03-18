@@ -65,6 +65,8 @@ ABSOLUTE RULES:
    pie      → parts of whole, max 6 segments only
    donut    → same as pie, modern style
    composed → showing 2 different metrics together
+   heatmap  → comparing values across two dimensions (e.g., region vs month). For 1D heatmap use standard xKey + single yKey. For 2D heatmap use xKey for rows, first yKey as the value, second yKey as the column category.
+   scatter  → correlation between two numeric variables
 7. Aggregate the actual CSV data yourself and return chart-ready data arrays.
 8. Max 20 data points per chart.
 9. KPI "value" must be a raw number only, no currency symbols or formatting.
