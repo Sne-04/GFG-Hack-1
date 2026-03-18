@@ -10,17 +10,38 @@ function checkRateLimit() {
   lastCallTime = now
 }
 
-function buildSystemPrompt(schema, sampleData, rowCount) {
+function buildSystemPrompt(schema, sampleData, rowCount, preComputed) {
+  const statsBlock = preComputed
+    ? JSON.stringify(preComputed.stats, null, 2)
+    : '(not available)'
+
+  const groupedBlock = preComputed?.groupedData
+    ? JSON.stringify(preComputed.groupedData, null, 2)
+    : '(not available)'
+
+  const anomaliesBlock = preComputed?.anomalies?.length
+    ? preComputed.anomalies.map(a => `- ${a}`).join('\n')
+    : '(none detected)'
+
   return `You are DataMind AI, a world-class business intelligence analyst.
-You have been given a CSV dataset to analyze. Your job is to read the data precisely, compute correct aggregates, and return a structured JSON dashboard.
+You have been given a CSV dataset to analyze. Your job is to pick the best visualizations and write insights — NOT to compute numbers yourself.
 
 CSV COLUMN SCHEMA:
 ${schema}
 
-ACTUAL CSV DATA (up to 50 rows):
+SAMPLE DATA (10 rows for context):
 ${sampleData}
 
 TOTAL ROW COUNT: ${rowCount}
+
+===== PRE-COMPUTED STATISTICS (use these as ground truth) =====
+${statsBlock}
+
+===== PRE-COMPUTED GROUP AGGREGATIONS =====
+${groupedBlock}
+
+===== DETECTED ANOMALIES =====
+${anomaliesBlock}
 
 CRITICAL: Respond ONLY with raw valid JSON. No markdown. No backticks. No explanation text outside the JSON.
 
@@ -30,7 +51,7 @@ Required JSON structure:
   "cannot_answer": false,
   "cannot_answer_reason": null,
   "sql_logic": "The SQL query you would use to answer this question",
-  "anomalies": ["list of data anomalies you found"],
+  "anomalies": ["list of data anomalies — use the pre-computed anomalies above"],
   "trend_analysis": "detailed 3-4 sentence analysis of the data trends",
   "kpis": [
     {
@@ -61,28 +82,27 @@ Required JSON structure:
 }
 
 ABSOLUTE RULES:
-1. ACCURACY IS PARAMOUNT — read every value from the actual CSV data provided above. Count rows, sum numbers, compute averages ONLY from the real data. NEVER invent or hallucinate numbers.
-2. If the user's question relates to columns or values that DO NOT exist in the CSV, DO NOT REFUSE. Instead, generate a useful overview dashboard using the columns that DO exist and explain in "ai_insight" that you used available columns.
-3. Set "cannot_answer" to true ONLY if:
-   - The question is completely unrelated to any kind of data analysis (e.g., "who is X?", "write me a poem", "what is the capital of France?").
-   - In this case, set "cannot_answer_reason" to: "I am DataMind AI, a specialized data analyst. I can only help with questions about your uploaded dataset."
-4. Return EXACTLY 3-4 charts every time (when answering about data).
-5. Return EXACTLY 4 KPI cards every time (when answering about data).
-6. Chart type selection:
+1. ACCURACY IS PARAMOUNT — Use ONLY the pre-computed statistics above for all numbers. DO NOT compute your own sums, averages, or counts. The stats above were computed from ALL ${rowCount} rows, not just the sample.
+2. KPI values MUST come from the pre-computed stats (sum, mean, min, max, count). Reference the exact numbers provided.
+3. Chart data arrays should use the pre-computed group aggregations when available. For grouped bar/line charts, use the groupedData above directly.
+4. If the user's question relates to columns that DO NOT exist in the CSV, DO NOT REFUSE. Instead, generate a useful overview dashboard using available columns and explain in "ai_insight".
+5. Set "cannot_answer" to true ONLY if the question is completely unrelated to data analysis (e.g., "who is X?", "write me a poem").
+   In this case, set "cannot_answer_reason" to: "I am DataMind AI, a specialized data analyst. I can only help with questions about your uploaded dataset."
+6. Return EXACTLY 3-4 charts every time (when answering about data).
+7. Return EXACTLY 4 KPI cards every time (when answering about data).
+8. Chart type selection:
    line     → time series, trends over months/days/years
    bar      → comparing categories (regions, products, names)
    area     → volume/cumulative over time
    pie      → parts of whole, max 6 segments only
    donut    → same as pie, modern style
    composed → showing 2 different metrics together
-   heatmap  → comparing values across two dimensions (e.g., region vs month). For 1D heatmap use standard xKey + single yKey. For 2D heatmap use xKey for rows, first yKey as the value, second yKey as the column category.
+   heatmap  → comparing values across two dimensions
    scatter  → correlation between two numeric variables
-7. Aggregate the actual CSV data yourself and return chart-ready data arrays.
-8. Max 20 data points per chart.
-9. KPI "value" must be a raw number only, no currency symbols or formatting.
-10. Always find and report anomalies (outliers, missing data, unexpected patterns).
+9. Max 20 data points per chart.
+10. KPI "value" must be a raw number only, no currency symbols or formatting.
 11. Use these colors in yKeys: "#6366f1", "#22d3ee", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#8b5cf6"
-12. Double-check all sums, averages, and counts against the actual CSV data before responding.`
+12. NEVER invent or hallucinate numbers. Every number you output must trace back to the pre-computed statistics or group aggregations provided above.`
 }
 
 function parseAIResponse(text) {
@@ -113,13 +133,14 @@ async function callAPI(body) {
   return response.json()
 }
 
-export async function queryOpenAI(query, schema, sampleData, rowCount, conversationHistory = []) {
+export async function queryOpenAI(query, schema, sampleData, rowCount, conversationHistory = [], preComputed = null) {
   checkRateLimit()
 
   const systemPrompt = buildSystemPrompt(
     typeof schema === 'string' ? schema : JSON.stringify(schema),
     typeof sampleData === 'string' ? sampleData : JSON.stringify(sampleData),
-    rowCount
+    rowCount,
+    preComputed
   )
 
   const data = await callAPI({
