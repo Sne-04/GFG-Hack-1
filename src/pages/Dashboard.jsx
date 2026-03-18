@@ -24,7 +24,6 @@ export default function Dashboard() {
   const [error, setError] = useState(null)
   const [recentQueries, setRecentQueries] = useState([])
   const [activeFilters, setActiveFilters] = useState({})
-  const [apiKey] = useState(import.meta.env.VITE_OPENAI_API_KEY || '')
   const [theme, setTheme] = useState('indigo')
   const [resultTab, setResultTab] = useState('sql')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -72,7 +71,6 @@ export default function Dashboard() {
 
   const handleQuery = useCallback(async (query, overrideFilters = null) => {
     if (!csvData) { setError('Please upload a CSV file first'); return }
-    if (!apiKey) { setError('API key not configured'); return }
     setLoading(true)
     setError(null)
     setResult(null)
@@ -85,7 +83,7 @@ export default function Dashboard() {
 
     try {
       const sample = getSampleRows(csvData.data)
-      const res = await queryOpenAI(fullQuery, schema, sample, csvData.rowCount, [], apiKey)
+      const res = await queryOpenAI(fullQuery, schema, sample, csvData.rowCount)
       if (res.cannot_answer) {
         setError(res.cannot_answer_reason || 'Cannot answer this question with available data.')
       } else {
@@ -97,7 +95,7 @@ export default function Dashboard() {
     setLoading(false)
     // Auto-scroll to results
     setTimeout(() => outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300)
-  }, [csvData, schema, apiKey, activeFilters])
+  }, [csvData, schema, activeFilters])
 
   const handleFilterChange = useCallback((col, val) => {
     setActiveFilters(p => {
@@ -394,7 +392,7 @@ export default function Dashboard() {
                 if (result.trend_analysis) parts.push(`Trend Analysis: ${result.trend_analysis}`)
               }
               return parts.length > 0 ? parts.join('\n') : 'No data uploaded yet. Please upload a CSV file first.'
-            })()} apiKey={apiKey} />
+            })()} />
           </div>
           {csvData ? (
             <div className="h-64 overflow-y-auto p-4 bg-black/20">

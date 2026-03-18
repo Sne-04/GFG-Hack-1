@@ -3,7 +3,7 @@ import { Send, Bot, User } from 'lucide-react'
 import { chatWithOpenAI } from '../utils/openaiApi'
 import { motion } from 'framer-motion'
 
-export default function AIChat({ context, apiKey }) {
+export default function AIChat({ context }) {
   const [messages, setMessages] = useState([
     { role: 'assistant', content: "📊 Hi! I'm your DataMind AI analyst. I can only answer questions about your uploaded dataset. Ask me about trends, metrics, or insights from your data!" }
   ])
@@ -26,7 +26,7 @@ export default function AIChat({ context, apiKey }) {
         role: m.role === 'assistant' ? 'assistant' : 'user',
         content: m.content
       }))
-      const reply = await chatWithOpenAI(userMsg, context, history, apiKey)
+      const reply = await chatWithOpenAI(userMsg, context, history)
       setMessages(p => [...p, { role: 'assistant', content: reply }])
     } catch (err) {
       setMessages(p => [...p, { role: 'assistant', content: `Error: ${err.message || "I couldn't process that."}` }])

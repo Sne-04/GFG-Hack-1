@@ -2,6 +2,8 @@ import { useState, useRef } from 'react'
 import { Send, Sparkles } from 'lucide-react'
 import { motion } from 'framer-motion'
 
+const MAX_QUERY_LENGTH = 500
+
 const SAMPLE_CHIPS = [
   { emoji: '📈', text: 'Monthly revenue trend' },
   { emoji: '🗺', text: 'Compare sales by region' },
@@ -54,6 +56,7 @@ export default function QueryInput({ onSubmit, hasData, recentQueries = [] }) {
           <input
             ref={inputRef}
             value={query}
+            maxLength={MAX_QUERY_LENGTH}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSubmit()}
             placeholder="Ask anything... e.g. Show Q3 revenue by region"
