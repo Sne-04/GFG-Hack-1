@@ -4,7 +4,7 @@ import { TrendingUp, TrendingDown } from 'lucide-react'
 
 export default function KPICard({ label, value, unit, trend, trendDirection, delay = 0 }) {
   const count = useMotionValue(0)
-  const numVal = typeof value === 'number' ? value : parseFloat(String(value).replace(/[^0-9.]/g, '')) || 0
+  const numVal = typeof value === 'number' ? value : parseFloat(String(value).replace(/[^0-9.\-]/g, '')) || 0
   const display = useTransform(count, v => {
     if (unit === '$') return '$' + Math.round(v).toLocaleString()
     if (unit === '%') return Math.round(v) + '%'

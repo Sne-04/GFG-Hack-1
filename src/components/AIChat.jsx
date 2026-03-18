@@ -109,7 +109,7 @@ export default function AIChat({ context }) {
           placeholder="Ask about this data..."
           className="flex-1 glass rounded-lg px-3 py-2 text-xs bg-transparent outline-none text-slate-200 focus:ring-1 focus:ring-primary/30"
         />
-        <button onClick={send} className="glow-btn rounded-lg px-3 py-2">
+        <button onClick={send} aria-label="Send message" disabled={loading} className="glow-btn rounded-lg px-3 py-2 disabled:opacity-50">
           <Send size={12}/>
         </button>
       </div>

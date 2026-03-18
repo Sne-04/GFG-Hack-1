@@ -24,7 +24,7 @@ export default function Dashboard() {
   const [error, setError] = useState(null)
   const [recentQueries, setRecentQueries] = useState([])
   const [activeFilters, setActiveFilters] = useState({})
-  const [theme, setTheme] = useState('indigo')
+  const [theme, setTheme] = useState(() => localStorage.getItem('datamind-theme') || 'indigo')
   const [resultTab, setResultTab] = useState('sql')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(false)
@@ -66,7 +66,6 @@ export default function Dashboard() {
     setSchema(null)
     setActiveFilters({})
     setError(null)
-    setQuery('')
   }, [])
 
   const handleQuery = useCallback(async (query, overrideFilters = null) => {
@@ -128,7 +127,7 @@ export default function Dashboard() {
             </div>
             <span className="font-bold text-[16px] tracking-tight">DataMind AI</span>
           </div>
-          <button className="md:hidden text-slate-400 hover:text-white px-2" onClick={() => setIsSidebarOpen(false)}>✕</button>
+          <button className="md:hidden text-slate-400 hover:text-white px-2" onClick={() => setIsSidebarOpen(false)} aria-label="Close sidebar">✕</button>
         </div>
 
         <div className="p-4">
@@ -156,7 +155,7 @@ export default function Dashboard() {
             <p className="text-[9px] uppercase tracking-widest text-slate-500 font-semibold mb-2">Theme</p>
             <div className="flex gap-2">
               {Object.entries(themeColors).map(([k, c]) => (
-                <button key={k} onClick={() => setTheme(k)} className={`w-5 h-5 rounded-full transition-all ${theme === k ? 'ring-2 ring-offset-2 ring-offset-[#0a0a0f] scale-110' : 'opacity-50 hover:opacity-80'}`} style={{ background: c, ringColor: c }}/>
+                <button key={k} onClick={() => { setTheme(k); localStorage.setItem('datamind-theme', k) }} className={`w-5 h-5 rounded-full transition-all ${theme === k ? 'ring-2 ring-offset-2 ring-offset-[#0a0a0f] scale-110' : 'opacity-50 hover:opacity-80'}`} style={{ background: c, ringColor: c }}/>
               ))}
             </div>
           </div>
@@ -197,7 +196,7 @@ export default function Dashboard() {
       <main className="flex-1 overflow-y-auto z-10 w-full flex flex-col relative">
         {/* Mobile Header (visible only on md:hidden) */}
         <div className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-[#08080c] sticky top-0 z-20">
-          <button onClick={() => setIsSidebarOpen(true)} className="text-slate-300 pointer-events-auto">
+          <button onClick={() => setIsSidebarOpen(true)} aria-label="Open sidebar menu" className="text-slate-300 pointer-events-auto">
             <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
           </button>
           <span className="font-bold text-sm">DataMind</span>
@@ -372,7 +371,7 @@ export default function Dashboard() {
       {/* RIGHT PANEL */}
       <aside className={`fixed inset-y-0 right-0 bg-[#08080c] z-50 transform transition-transform md:relative md:translate-x-0 w-80 border-l border-white/5 flex flex-col shrink-0 ${isRightPanelOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="flex border-b border-white/5 items-center p-4">
-          <button className="md:hidden text-slate-400 hover:text-white px-2 mr-2 border-r border-white/5" onClick={() => setIsRightPanelOpen(false)}>✕</button>
+          <button className="md:hidden text-slate-400 hover:text-white px-2 mr-2 border-r border-white/5" onClick={() => setIsRightPanelOpen(false)} aria-label="Close chat panel">✕</button>
           <span className="font-bold text-sm text-slate-200">Assistant & Data</span>
         </div>
         <div className="flex-1 flex flex-col overflow-hidden">

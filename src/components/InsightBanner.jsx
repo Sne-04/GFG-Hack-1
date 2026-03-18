@@ -1,18 +1,26 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const InsightBanner = ({ insight, anomalies }) => {
   const [displayed, setDisplayed] = useState('')
-  
+  const rafRef = useRef(null)
+
   useEffect(() => {
     if (!insight) return
     setDisplayed('')
     let i = 0
-    const timer = setInterval(() => {
-      setDisplayed(insight.slice(0, i))
-      i++
-      if (i > insight.length) clearInterval(timer)
-    }, 20)
-    return () => clearInterval(timer)
+    let last = 0
+    const step = (timestamp) => {
+      if (timestamp - last >= 20) {
+        i++
+        setDisplayed(insight.slice(0, i))
+        last = timestamp
+      }
+      if (i <= insight.length) {
+        rafRef.current = requestAnimationFrame(step)
+      }
+    }
+    rafRef.current = requestAnimationFrame(step)
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
   }, [insight])
 
   return (
@@ -32,7 +40,9 @@ const InsightBanner = ({ insight, anomalies }) => {
       </div>
       <div className="text-slate-300 leading-relaxed text-[14px] font-medium">
         {displayed}
-        <span className="animate-pulse text-primary ml-1 text-lg">|</span>
+        {displayed.length < (insight?.length || 0) && (
+          <span className="animate-pulse text-primary ml-1 text-lg">|</span>
+        )}
       </div>
     </div>
   )
