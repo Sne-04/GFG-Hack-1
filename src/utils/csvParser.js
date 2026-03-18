@@ -30,7 +30,7 @@ export function getSchema(columns, data) {
   })
 }
 
-export function getSampleRows(data, n = 3) {
+export function getSampleRows(data, n = 50) {
   return data.slice(0, n)
 }
 

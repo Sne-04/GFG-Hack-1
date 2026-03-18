@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 
 export default function AIChat({ context, apiKey }) {
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: "👋 Hi! I'm your AI data analyst. Ask me anything about this dashboard." }
+    { role: 'assistant', content: "📊 Hi! I'm your DataMind AI analyst. I can only answer questions about your uploaded dataset. Ask me about trends, metrics, or insights from your data!" }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -35,9 +35,9 @@ export default function AIChat({ context, apiKey }) {
   }
 
   const SUGGESTIONS = [
-    "What are the key trends?",
+    "What are the key trends in my data?",
     "Which metric needs attention?",
-    "Give me a summary"
+    "Summarize the dataset"
   ]
 
   return (

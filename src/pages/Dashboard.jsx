@@ -379,7 +379,22 @@ export default function Dashboard() {
         </div>
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 border-b border-white/5">
-            <AIChat context={result ? JSON.stringify({ kpis: result.kpis, insight: result.ai_insight, query: result.query }) : 'No dashboard loaded yet'} apiKey={apiKey} />
+            <AIChat context={(() => {
+              const parts = []
+              if (csvData) {
+                parts.push(`CSV Columns: ${csvData.columns.join(', ')}`)
+                parts.push(`Total Rows: ${csvData.rowCount}`)
+                parts.push(`Sample Data (first 10 rows): ${JSON.stringify(csvData.data.slice(0, 10))}`)
+              }
+              if (result) {
+                parts.push(`Dashboard KPIs: ${JSON.stringify(result.kpis)}`)
+                parts.push(`AI Insight: ${result.ai_insight}`)
+                parts.push(`User Query: ${result.query}`)
+                if (result.anomalies) parts.push(`Anomalies: ${JSON.stringify(result.anomalies)}`)
+                if (result.trend_analysis) parts.push(`Trend Analysis: ${result.trend_analysis}`)
+              }
+              return parts.length > 0 ? parts.join('\n') : 'No data uploaded yet. Please upload a CSV file first.'
+            })()} apiKey={apiKey} />
           </div>
           {csvData ? (
             <div className="h-64 overflow-y-auto p-4 bg-black/20">

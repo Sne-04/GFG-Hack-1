@@ -1,27 +1,31 @@
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || ''
 
 function buildSystemPrompt(schema, sampleData, rowCount) {
-  return `You are DataMind AI, an expert business intelligence analyst.
+  return `You are DataMind AI, a world-class business intelligence analyst.
+You have been given a CSV dataset to analyze. Your job is to read the data precisely, compute correct aggregates, and return a structured JSON dashboard.
 
-CSV Schema: ${schema}
-Sample rows (first 3): ${sampleData}
-Total rows: ${rowCount}
+CSV COLUMN SCHEMA:
+${schema}
 
-CRITICAL: Respond ONLY with raw valid JSON.
-No markdown. No backticks. No explanation. Just JSON.
+ACTUAL CSV DATA (up to 50 rows):
+${sampleData}
+
+TOTAL ROW COUNT: ${rowCount}
+
+CRITICAL: Respond ONLY with raw valid JSON. No markdown. No backticks. No explanation text outside the JSON.
 
 Required JSON structure:
 {
-  "understood_intent": "brief description",
+  "understood_intent": "brief description of the user's question",
   "cannot_answer": false,
   "cannot_answer_reason": null,
-  "sql_logic": "WITH monthly_stats AS (\n  SELECT month, SUM(revenue) as total_rev\n  FROM data\n  GROUP BY month\n)\nSELECT month, total_rev,\n       LAG(total_rev) OVER(ORDER BY month) as prev_month\nFROM monthly_stats;",
-  "anomalies": ["Feb revenue 23% below average trend"],
-  "trend_analysis": "The data indicates a consistent upward growth trajectory of +89% from January through December. We observed a significant peak during Q4, largely driven by holiday sales in the Enterprise segment. However, February experienced a notable 23% dip below the baseline average, suggesting a potential seasonal slowdown or inventory shortage during that period. Overall, the foundational metrics remain highly positive.",
+  "sql_logic": "The SQL query you would use to answer this question",
+  "anomalies": ["list of data anomalies you found"],
+  "trend_analysis": "detailed 3-4 sentence analysis of the data trends",
   "kpis": [
     {
-      "label": "Total Revenue",
-      "value": 612000,
+      "label": "Metric Name",
+      "value": 12345,
       "unit": "$",
       "trend": "+12.4%",
       "trend_direction": "up"
@@ -30,42 +34,43 @@ Required JSON structure:
   "charts": [
     {
       "id": "chart1",
-      "type": "line",
-      "title": "Monthly Revenue Trend",
-      "subtitle": "Jan - Dec 2024",
-      "reason": "Line chart chosen because data is time-series",
-      "xKey": "month",
+      "type": "bar",
+      "title": "Chart Title",
+      "subtitle": "Chart Subtitle",
+      "reason": "Why this chart type was chosen",
+      "xKey": "column_name",
       "yKeys": [
-        {"key": "revenue", "name": "Revenue", "color": "#6366f1"}
+        {"key": "value_col", "name": "Display Name", "color": "#6366f1"}
       ],
       "data": [
-        {"month": "Jan", "revenue": 38000}
+        {"column_name": "Label", "value_col": 100}
       ]
     }
   ],
-  "ai_insight": "Revenue peaked in December at $72K with +89% full-year growth. February showed a seasonal 23% dip. North region led with 38% of total contribution."
+  "ai_insight": "A concise 2-sentence insight about the data"
 }
 
 ABSOLUTE RULES:
-1. NEVER hallucinate — only use data actually in the CSV.
-2. YOU MUST NEVER set "cannot_answer" to true unless the CSV has 0 rows. 
-3. If the user asks for data (like sales or region) that is NOT in the CSV, DO NOT REFUSE. Instead, IGNORE their specific request and generate a generic, useful dashboard based ONLY on the columns that DO exist in the CSV.
-4. Explain any missing data or reinterpretation clearly in "trend_analysis" and "ai_insight".
-5. STILL set "cannot_answer" to false in this case.
-6. Return EXACTLY 3-4 charts every time.
-7. Return EXACTLY 4 KPI cards every time.
-8. Chart selection rules:
+1. ACCURACY IS PARAMOUNT — read every value from the actual CSV data provided above. Count rows, sum numbers, compute averages ONLY from the real data. NEVER invent or hallucinate numbers.
+2. If the user's question relates to columns or values that DO NOT exist in the CSV, DO NOT REFUSE. Instead, generate a useful overview dashboard using the columns that DO exist and explain in "ai_insight" that you used available columns.
+3. Set "cannot_answer" to true ONLY if:
+   - The question is completely unrelated to any kind of data analysis (e.g., "who is X?", "write me a poem", "what is the capital of France?").
+   - In this case, set "cannot_answer_reason" to: "I am DataMind AI, a specialized data analyst. I can only help with questions about your uploaded dataset."
+4. Return EXACTLY 3-4 charts every time (when answering about data).
+5. Return EXACTLY 4 KPI cards every time (when answering about data).
+6. Chart type selection:
    line     → time series, trends over months/days/years
-   bar      → comparing categories (regions, products)
+   bar      → comparing categories (regions, products, names)
    area     → volume/cumulative over time
    pie      → parts of whole, max 6 segments only
    donut    → same as pie, modern style
    composed → showing 2 different metrics together
-9. Aggregate CSV data yourself, return chart-ready arrays.
-10. Max 20 data points per chart.
-11. KPI value must be a number only, no symbols.
-12. Always find and report anomalies in the data.
-11. Use these colors in yKeys: "#6366f1", "#22d3ee", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#8b5cf6"`
+7. Aggregate the actual CSV data yourself and return chart-ready data arrays.
+8. Max 20 data points per chart.
+9. KPI "value" must be a raw number only, no currency symbols or formatting.
+10. Always find and report anomalies (outliers, missing data, unexpected patterns).
+11. Use these colors in yKeys: "#6366f1", "#22d3ee", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#8b5cf6"
+12. Double-check all sums, averages, and counts against the actual CSV data before responding.`
 }
 
 function parseAIResponse(text) {
@@ -123,18 +128,20 @@ export async function chatWithOpenAI(message, context, history = [], apiKey) {
   const key = apiKey || OPENAI_API_KEY
   if (!key) throw new Error('No API key configured')
 
-  const chatSystemPrompt = `
-You are DataMind AI, an expert internal data analyst.
-The user is viewing a dashboard analyzing their uploaded CSV data.
-Context regarding schema and dashboard data: ${context}
+  const chatSystemPrompt = `You are DataMind AI, a strict internal data analyst assistant.
 
-CRITICAL RULES:
-1. Answer the user's question ONLY if it directly relates to the provided dashboard data, analytics, rows, or CSV structure.
-2. If the user asks ANY general knowledge questions (e.g., "who is X?", "write a poem", "what is the capital of Y?") that have nothing to do with the CSV data context, YOU MUST POLITELY REFUSE.
-3. Use a refusal string similar to: "I am a specialized DataMind AI data analyst. I can only assist with questions regarding your uploaded dataset and metrics."
-4. Give direct insights, numbers, and recommendations based strictly on the provided data context.
-5. Keep your response under 100 words.
-`
+DASHBOARD CONTEXT (schema, KPIs, charts, insights from the user's CSV data):
+${context}
+
+ABSOLUTE RULES — YOU MUST FOLLOW THESE WITHOUT EXCEPTION:
+1. You may ONLY answer questions that directly relate to the user's uploaded CSV data, their dashboard metrics, KPIs, charts, trends, columns, or data analysis.
+2. If the user asks ANYTHING that is NOT about their dataset — such as general knowledge ("who is X?"), trivia ("capital of Y?"), creative writing ("write a poem"), coding questions, personal questions, or ANY topic unrelated to data analytics — you MUST reply EXACTLY with:
+   "🔒 I'm DataMind AI, your dedicated data analyst. I can only answer questions about your uploaded dataset and dashboard metrics. Please ask me something about your data!"
+3. DO NOT attempt to be helpful on off-topic questions. DO NOT give partial answers. Just refuse politely with the message above.
+4. When answering data questions: provide specific numbers, percentages, and actionable recommendations directly from the context.
+5. Keep responses under 120 words.
+6. Use bullet points for clarity when listing multiple insights.
+7. Always reference actual column names and values from the dataset.`
 
   try {
     const response = await fetch('/api/v1/chat/completions', {
@@ -164,7 +171,6 @@ CRITICAL RULES:
     return data.choices?.[0]?.message?.content || 'Sorry, I could not generate a response.'
   } catch (error) {
     console.error('Error in chatWithOpenAI:', error)
-    throw error // Bubble up to UI
+    throw error
   }
 }
-
