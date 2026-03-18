@@ -34,9 +34,28 @@ export default function AIChat({ context, apiKey }) {
     setLoading(false)
   }
 
+  const SUGGESTIONS = [
+    "What are the key trends?",
+    "Which metric needs attention?",
+    "Give me a summary"
+  ]
+
   return (
     <div className="flex flex-col h-full">
-      <div ref={msgsRef} className="flex-1 overflow-y-auto space-y-2 p-1 mb-3">
+      <div ref={msgsRef} className="flex-1 overflow-y-auto space-y-3 p-2 mb-3">
+        {messages.length === 1 && (
+          <div className="flex flex-wrap gap-2 mt-4 justify-center">
+            {SUGGESTIONS.map(s => (
+              <button 
+                key={s} 
+                onClick={() => { setInput(s); setTimeout(() => send(), 50) }}
+                className="glass text-[10px] text-primary/80 hover:text-primary px-3 py-1.5 rounded-full whitespace-nowrap"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
         {messages.map((m, i) => (
           <motion.div
             key={i}
@@ -45,11 +64,23 @@ export default function AIChat({ context, apiKey }) {
             className={`flex gap-2 ${m.role === 'user' ? 'justify-end' : ''}`}
           >
             {m.role === 'assistant' && <Bot size={14} className="text-primary mt-1 shrink-0"/>}
-            <div className={`max-w-[85%] rounded-xl px-3 py-2 text-xs leading-relaxed ${
+            <div style={
               m.role === 'user'
-                ? 'bg-gradient-to-r from-primary to-primary-dark text-white rounded-br-sm'
-                : 'glass text-slate-300 rounded-bl-sm'
-            }`}>
+                ? {
+                    background: 'rgba(99,102,241,0.2)',
+                    border: '1px solid rgba(99,102,241,0.3)',
+                    borderRadius: '12px 12px 0 12px',
+                    padding: '10px 14px',
+                    color: '#f1f5f9'
+                  }
+                : {
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '12px 12px 12px 0',
+                    padding: '10px 14px',
+                    color: '#e2e8f0'
+                  }
+            } className="text-xs leading-relaxed max-w-[85%]">
               {m.content}
             </div>
             {m.role === 'user' && <User size={14} className="text-secondary mt-1 shrink-0"/>}
@@ -58,7 +89,15 @@ export default function AIChat({ context, apiKey }) {
         {loading && (
           <div className="flex gap-2">
             <Bot size={14} className="text-primary mt-1"/>
-            <div className="glass rounded-xl px-3 py-2 text-xs text-slate-400 italic animate-pulse">Thinking...</div>
+            <div style={{
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '12px 12px 12px 0',
+              padding: '10px 14px',
+              color: '#e2e8f0'
+            }} className="text-xs italic flex items-center gap-1">
+              Thinking <span className="animate-pulse">● ● ●</span>
+            </div>
           </div>
         )}
       </div>

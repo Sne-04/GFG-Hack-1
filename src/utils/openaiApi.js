@@ -15,9 +15,9 @@ Required JSON structure:
   "understood_intent": "brief description",
   "cannot_answer": false,
   "cannot_answer_reason": null,
-  "sql_logic": "SELECT month, SUM(revenue) FROM data GROUP BY month",
+  "sql_logic": "WITH monthly_stats AS (\n  SELECT month, SUM(revenue) as total_rev\n  FROM data\n  GROUP BY month\n)\nSELECT month, total_rev,\n       LAG(total_rev) OVER(ORDER BY month) as prev_month\nFROM monthly_stats;",
   "anomalies": ["Feb revenue 23% below average trend"],
-  "trend_analysis": "Consistent upward growth +89% Jan to Dec",
+  "trend_analysis": "The data indicates a consistent upward growth trajectory of +89% from January through December. We observed a significant peak during Q4, largely driven by holiday sales in the Enterprise segment. However, February experienced a notable 23% dip below the baseline average, suggesting a potential seasonal slowdown or inventory shortage during that period. Overall, the foundational metrics remain highly positive.",
   "kpis": [
     {
       "label": "Total Revenue",
@@ -119,9 +119,19 @@ export async function queryOpenAI(query, schema, sampleData, rowCount, conversat
   return parseAIResponse(text)
 }
 
-export async function chatWithOpenAI(message, context, apiKey) {
+export async function chatWithOpenAI(message, context, history = [], apiKey) {
   const key = apiKey || OPENAI_API_KEY
   if (!key) throw new Error('No API key configured')
+
+  const chatSystemPrompt = `
+You are DataMind AI assistant.
+The user is viewing a dashboard about their CSV data.
+Context regarding schema and dashboard data: ${context}
+
+Answer the user's question about this data concisely.
+Give direct insights, numbers, and recommendations.
+Keep response under 100 words.
+`
 
   try {
     const response = await fetch('/api/v1/chat/completions', {
@@ -134,7 +144,8 @@ export async function chatWithOpenAI(message, context, apiKey) {
         model: 'gpt-4o',
         max_tokens: 1024,
         messages: [
-          { role: 'system', content: `You are DataMind AI chat assistant. Answer questions about the dashboard data concisely. Context: ${context}` },
+          { role: 'system', content: chatSystemPrompt },
+          ...history,
           { role: 'user', content: message }
         ]
       })

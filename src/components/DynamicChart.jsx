@@ -1,6 +1,16 @@
 import { ResponsiveContainer, LineChart, BarChart, AreaChart, PieChart, ComposedChart, Line, Bar, Area, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts'
 import { CustomTooltip, getChartColor } from '../utils/chartHelpers.jsx'
 
+const COLORS = [
+  "#6366f1",  // purple
+  "#22d3ee",  // cyan  
+  "#f59e0b",  // amber
+  "#10b981",  // green
+  "#f43f5e",  // red/pink
+  "#8b5cf6",  // violet
+  "#06b6d4",  // sky
+]
+
 export default function DynamicChart({ type, data, xKey, yKeys }) {
   if (!data?.length || !yKeys?.length) return <p className="text-slate-500 text-xs text-center pt-20">No data</p>
 
@@ -13,9 +23,25 @@ export default function DynamicChart({ type, data, xKey, yKeys }) {
     <Line key={yk.key} type="monotone" dataKey={yk.key} name={yk.name || yk.key} stroke={yk.color || getChartColor(i)} strokeWidth={2.5} dot={{ fill: yk.color || getChartColor(i), r: 3 }} activeDot={{ r: 6, fill: yk.color || getChartColor(i) }} />
   ))
 
-  const renderBars = () => yKeys.map((yk, i) => (
-    <Bar key={yk.key} dataKey={yk.key} name={yk.name || yk.key} fill={yk.color || getChartColor(i)} radius={[4, 4, 0, 0]} />
-  ))
+  const renderBars = () => {
+    // For single-metric bar charts where all bars should show different colors per data point
+    if (yKeys.length === 1 && data && data.length > 0) {
+      return (
+        <Bar dataKey={yKeys[0].key} name={yKeys[0].name || yKeys[0].key} radius={[4, 4, 0, 0]}>
+          {data.map((entry, i) => (
+            <Cell key={i} fill={COLORS[i % COLORS.length]} />
+          ))}
+        </Bar>
+      )
+    }
+    
+    // For multi-metric bar charts where each bar series gets a different color
+    return yKeys.map((yk, i) => (
+      <Bar key={yk.key} dataKey={yk.key} name={yk.name || yk.key} 
+        fill={yk.color || COLORS[i % COLORS.length]} 
+        radius={[4, 4, 0, 0]} />
+    ))
+  }
 
   const renderAreas = () => yKeys.map((yk, i) => (
     <Area key={yk.key} type="monotone" dataKey={yk.key} name={yk.name || yk.key} stroke={yk.color || getChartColor(i)} fill={yk.color || getChartColor(i)} fillOpacity={0.15} strokeWidth={2} />

@@ -23,15 +23,20 @@ export default function KPICard({ label, value, unit, trend, trendDirection, del
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: delay * 0.15, duration: 0.5 }}
-      className="glass rounded-xl p-4 text-center gradient-border glass-hover transition-all duration-300 cursor-default"
+      className="relative overflow-hidden bg-gradient-to-br from-[#13141f] to-[#0c0d14] rounded-2xl p-5 border border-white/10 shadow-lg group hover:border-primary/30 transition-all duration-500 cursor-default"
     >
-      <motion.p className="text-2xl font-bold text-white mb-1">
+      <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all duration-700" />
+
+      <p className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold mb-3 relative z-10">{label}</p>
+      
+      <motion.p className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-400 mb-2 relative z-10 tracking-tight">
         {display}
       </motion.p>
-      <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mb-1">{label}</p>
+      
       {trend && (
-        <div className={`flex items-center justify-center gap-1 mt-1 text-[10px] font-semibold ${isUp ? 'text-emerald-400' : 'text-red-400'}`}>
-          {isUp ? '↑' : '↓'} {trend}
+        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold relative z-10 ${isUp ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+          {isUp ? <TrendingUp size={12}/> : <TrendingDown size={12}/>} 
+          {trend}
         </div>
       )}
     </motion.div>

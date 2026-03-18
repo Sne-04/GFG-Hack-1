@@ -1,53 +1,41 @@
-import { motion } from 'framer-motion'
-import { Bot } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
-export default function InsightBanner({ text, anomalies = [] }) {
+const InsightBanner = ({ insight, anomalies }) => {
   const [displayed, setDisplayed] = useState('')
-
+  
   useEffect(() => {
-    if (!text) return
+    if (!insight) return
     setDisplayed('')
     let i = 0
     const timer = setInterval(() => {
-      if (i < text.length) { setDisplayed(text.slice(0, i + 1)); i++ }
-      else clearInterval(timer)
-    }, 25)
+      setDisplayed(insight.slice(0, i))
+      i++
+      if (i > insight.length) clearInterval(timer)
+    }, 20)
     return () => clearInterval(timer)
-  }, [text])
-
-  if (!text) return null
+  }, [insight])
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.5, duration: 0.5 }}
-      className="glass rounded-xl p-5 mt-4"
-      style={{ borderLeft: '3px solid #6366f1' }}
-    >
-      {/* Anomaly badges */}
+    <div className="relative overflow-hidden bg-gradient-to-r from-primary/10 to-transparent rounded-2xl p-6 mt-6 border border-primary/20 hover:border-primary/40 transition-all">
+      <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
       {anomalies?.length > 0 && (
         <div className="flex gap-2 flex-wrap mb-3">
           {anomalies.map((a, i) => (
-            <span key={i} className="text-[10px] px-3 py-1 rounded-full" style={{
-              background: 'rgba(251,146,60,0.15)',
-              border: '1px solid rgba(251,146,60,0.3)',
-              color: '#fb923c'
-            }}>
-              ⚠ {a}
+            <span key={i} className="bg-orange-500/10 border border-orange-500/20 text-orange-400 rounded-full px-3 py-1 text-xs font-medium flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse"/> {a}
             </span>
           ))}
         </div>
       )}
-
-      <div className="flex items-center gap-2 mb-2">
-        <Bot size={16} className="text-primary" />
-        <span className="text-xs font-semibold text-primary">🤖 AI Insight</span>
+      <div className="text-primary font-bold mb-2 text-[13px] flex items-center gap-2 uppercase tracking-wider">
+        <span className="bg-primary/20 p-1.5 rounded-md text-[14px]">🤖</span> AI Insight
       </div>
-      <p className="text-sm text-slate-300 leading-relaxed">
-        {displayed}<span className="animate-pulse text-primary">|</span>
-      </p>
-    </motion.div>
+      <div className="text-slate-300 leading-relaxed text-[14px] font-medium">
+        {displayed}
+        <span className="animate-pulse text-primary ml-1 text-lg">|</span>
+      </div>
+    </div>
   )
 }
+
+export default InsightBanner

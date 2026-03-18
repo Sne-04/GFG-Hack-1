@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Database, Plus, FileSpreadsheet, ChevronRight, AlertTriangle, Code, TrendingUp, Download } from 'lucide-react'
+import { Database, Plus, FileSpreadsheet, ChevronRight, AlertTriangle, Code, TrendingUp, Download, X } from 'lucide-react'
 import ParticleBackground from '../components/ParticleBackground'
 import CSVUpload from '../components/CSVUpload'
 import QueryInput from '../components/QueryInput'
@@ -28,6 +28,8 @@ export default function Dashboard() {
   const [theme, setTheme] = useState('purple')
   const [tab, setTab] = useState('queries')
   const [resultTab, setResultTab] = useState('sql')
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isRightPanelOpen, setIsRightPanelOpen] = useState(false)
   const contentRef = useRef(null)
   const outputRef = useRef(null)
 
@@ -41,9 +43,32 @@ export default function Dashboard() {
       setSchema(getSchema(parsed.columns, parsed.data))
       setResult(null)
       setError(null)
-    } catch {
-      setError('Invalid CSV file. Please try again.')
+    } catch (e) {
+      console.error(e)
+      setError(`Invalid CSV: ${e.message || 'Please try again.'}`)
     }
+  }, [])
+
+  const loadDemoData = useCallback(async () => {
+    try {
+      const response = await fetch('/demo_sales.csv')
+      const text = await response.text()
+      const file = new File([text], 'demo_sales.csv', { type: 'text/csv' })
+      handleUpload(file)
+    } catch (e) {
+      console.error(e)
+      setError(`Demo Error: ${e.message}`)
+    }
+  }, [handleUpload])
+
+  const clearData = useCallback(() => {
+    setCsvData(null)
+    setCsvFile(null)
+    setResult(null)
+    setSchema(null)
+    setActiveFilters({})
+    setError(null)
+    setQuery('')
   }, [])
 
   const handleQuery = useCallback(async (query) => {
@@ -74,22 +99,28 @@ export default function Dashboard() {
     setTimeout(() => outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300)
   }, [csvData, schema, apiKey, activeFilters])
 
-  const filters = csvData ? getCategoricalColumns(csvData.columns, csvData.data).map(col => ({
-    column: col,
-    values: [...new Set(csvData.data.map(r => r[col]).filter(Boolean))].slice(0, 15)
-  })) : []
+  const filters = csvData ? getCategoricalColumns(csvData.columns, csvData.data)
+    .slice(0, 4)
+    .map(col => ({
+      column: col,
+      values: [...new Set(csvData.data.map(r => r[col]).filter(Boolean))].slice(0, 15)
+    })) : []
 
   return (
-    <div className="flex h-screen overflow-hidden relative bg-[#08080c]">
+    <div className="flex flex-col md:flex-row h-screen overflow-hidden relative bg-[#08080c] w-full">
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && <div className="fixed inset-0 bg-black/70 z-40 md:hidden" onClick={() => setIsSidebarOpen(false)} />}
+      
       {/* LEFT SIDEBAR */}
-      <aside className="w-60 glass border-r border-white/5 flex flex-col z-10 shrink-0">
-        <div className="p-4 border-b border-white/5">
+      <aside className={`fixed inset-y-0 left-0 bg-[#08080c] z-50 transform transition-transform md:relative md:translate-x-0 w-60 border-r border-white/5 flex flex-col shrink-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="p-4 border-b border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex flex-col">
-              <span className="font-bold text-[16px] tracking-tight">DataMind AI</span>
-              <span className="text-[9px] text-slate-500 font-medium">Powered by OpenAI</span>
+            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+              <Database size={14} className="text-white" />
             </div>
+            <span className="font-bold text-[16px] tracking-tight">DataMind AI</span>
           </div>
+          <button className="md:hidden text-slate-400 hover:text-white px-2" onClick={() => setIsSidebarOpen(false)}>✕</button>
         </div>
 
         <div className="p-4">
@@ -126,13 +157,24 @@ export default function Dashboard() {
             <p className="text-[9px] uppercase tracking-widest text-slate-500 font-semibold mb-2">Data Source</p>
             {csvFile ? (
               <div className="glass rounded-lg p-2 text-[10px]">
-                <div className="flex items-center gap-1.5 text-emerald-400">
-                  <FileSpreadsheet size={10}/>{csvFile}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-emerald-400">
+                    <FileSpreadsheet size={10}/>
+                    <span className="truncate max-w-[120px]">{csvFile}</span>
+                  </div>
+                  <button onClick={clearData} className="text-slate-500 hover:text-red-400 p-1" title="Clear Data">
+                    <X size={12} />
+                  </button>
                 </div>
-                <p className="text-slate-500 mt-0.5">{csvData?.rowCount} rows</p>
+                <p className="text-slate-500 mt-1">{csvData?.rowCount} rows</p>
               </div>
             ) : (
-              <CSVUpload onUpload={handleUpload} compact />
+              <div className="space-y-2">
+                <CSVUpload onUpload={handleUpload} compact />
+                <button onClick={loadDemoData} className="w-full text-center border border-primary/30 text-primary hover:bg-primary/10 rounded-lg py-1.5 text-[9px] font-medium transition-colors">
+                  Try with demo data →
+                </button>
+              </div>
             )}
           </div>
 
@@ -144,16 +186,30 @@ export default function Dashboard() {
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 overflow-y-auto z-10">
-        <div id="dashboard-content" ref={contentRef} className="p-6 max-w-5xl mx-auto">
+      <main className="flex-1 overflow-y-auto z-10 w-full flex flex-col relative">
+        {/* Mobile Header (visible only on md:hidden) */}
+        <div className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-[#08080c] sticky top-0 z-20">
+          <button onClick={() => setIsSidebarOpen(true)} className="text-slate-300 pointer-events-auto">
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          </button>
+          <span className="font-bold text-sm">DataMind</span>
+          <button onClick={() => setIsRightPanelOpen(true)} className="text-xs bg-primary/20 text-primary px-3 py-1.5 rounded-lg font-medium pointer-events-auto">
+            AI Chat
+          </button>
+        </div>
+
+        <div id="dashboard-content" ref={contentRef} className="p-3 md:p-6 w-full max-w-5xl mx-auto flex-1 flex flex-col">
           {!csvData && !result && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-20">
               <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold mb-2">Welcome to <span className="text-primary">DataMind AI</span></h2>
                 <p className="text-sm text-slate-500">Upload a CSV to start analyzing your data</p>
               </div>
-              <div className="max-w-md mx-auto">
+              <div className="max-w-md mx-auto space-y-4">
                 <CSVUpload onUpload={handleUpload} />
+                <button onClick={loadDemoData} className="w-full text-center border border-primary/30 text-primary hover:bg-primary/10 rounded-xl py-3 text-sm font-medium transition-colors">
+                  Try with demo data →
+                </button>
               </div>
             </motion.div>
           )}
@@ -161,8 +217,13 @@ export default function Dashboard() {
           {csvData && !result && !loading && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <Header title="New Dashboard" subtitle={`${csvFile} • ${csvData.rowCount} rows • ${csvData.columns.length} columns`} />
-              <div className="glass rounded-xl p-5 mb-4">
-                <p className="text-xs text-slate-400 mb-2">Columns detected: <span className="text-slate-200">{csvData.columns.join(', ')}</span></p>
+              <div className="glass rounded-xl p-4 mb-4">
+                <p className="text-xs text-slate-400">
+                  <span className="text-slate-200 font-medium">{csvData.columns.length} Columns detected.</span>
+                  <span className="hidden sm:inline pl-2">
+                    {csvData.columns.slice(0, 6).join(', ')}{csvData.columns.length > 6 ? ' ...' : ''}
+                  </span>
+                </p>
               </div>
               {/* Filter Bar */}
               {filters.length > 0 && (
@@ -249,35 +310,57 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {/* Charts Grid — single full width column */}
+              {/* Charts Grid — Fix 7 Multi-chart Logic */}
               {result.charts?.length > 0 && (
-                <div className="space-y-6 mb-8">
-                  {result.charts.map((chart, i) => (
-                    <ChartCard key={chart.id || i} title={chart.title} subtitle={chart.subtitle} reason={chart.reason} delay={i * 0.1}>
+                <div>
+                  {/* First chart - full width */}
+                  <div style={{marginBottom: '16px'}}>
+                    <ChartCard chart={result.charts[0]} index={0} title={result.charts[0].title} subtitle={result.charts[0].subtitle} reason={result.charts[0].reason}>
                       <div style={{ height: 400 }}>
-                        <DynamicChart type={chart.type} data={chart.data} xKey={chart.xKey} yKeys={chart.yKeys} />
+                        <DynamicChart type={result.charts[0].type} data={result.charts[0].data} xKey={result.charts[0].xKey} yKeys={result.charts[0].yKeys} />
                       </div>
                     </ChartCard>
-                  ))}
+                  </div>
+                  
+                  {/* Remaining charts - 2 column grid */}
+                  {result.charts.length > 1 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      {result.charts.slice(1).map((chart, i) => (
+                        <ChartCard key={i+1} chart={chart} index={i+1} title={chart.title} subtitle={chart.subtitle} reason={chart.reason}>
+                          <div style={{ height: 300 }}>
+                            <DynamicChart type={chart.type} data={chart.data} xKey={chart.xKey} yKeys={chart.yKeys} />
+                          </div>
+                        </ChartCard>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* AI Insight Banner from Fix 5 */}
+                  <InsightBanner 
+                    insight={result.ai_insight}
+                    anomalies={result.anomalies}
+                  />
                 </div>
               )}
-
-              {/* Removed separate AI Insight Banner, integrated anomaly display into header */}
             </motion.div>
           )}
 
           {/* Query Input */}
           {csvData && (
-            <div className="sticky bottom-0 pt-4 pb-2 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/80 to-transparent">
+            <div className="sticky bottom-0 mt-auto z-30 pt-4 pb-4 md:pb-2 bg-[#08080c] md:bg-gradient-to-t md:from-[#08080c] md:via-[#08080c]/90 md:to-transparent border-t border-white/5 md:border-t-0 p-3 md:p-0">
               <QueryInput onSubmit={handleQuery} hasData={!!csvData} recentQueries={recentQueries} />
             </div>
           )}
         </div>
       </main>
 
+      {/* Mobile Right Overlay */}
+      {isRightPanelOpen && <div className="fixed inset-0 bg-black/70 z-40 md:hidden" onClick={() => setIsRightPanelOpen(false)} />}
+
       {/* RIGHT PANEL */}
-      <aside className="w-80 glass border-l border-white/5 flex flex-col z-10 shrink-0">
-        <div className="flex border-b border-white/5">
+      <aside className={`fixed inset-y-0 right-0 bg-[#08080c] z-50 transform transition-transform md:relative md:translate-x-0 w-80 border-l border-white/5 flex flex-col shrink-0 ${isRightPanelOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className="flex border-b border-white/5 items-center">
+          <button className="md:hidden text-slate-400 hover:text-white px-4 border-r border-white/5" onClick={() => setIsRightPanelOpen(false)}>✕</button>
           {['queries', 'chat', 'data'].map(t => (
             <button key={t} onClick={() => setTab(t)} className={`flex-1 py-3 text-[10px] uppercase tracking-wider font-semibold transition-all ${tab === t ? 'text-primary border-b-2 border-primary' : 'text-slate-500 hover:text-slate-300'}`}>
               {t === 'chat' ? 'AI Chat' : t}

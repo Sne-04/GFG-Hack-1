@@ -35,8 +35,12 @@ export function getSampleRows(data, n = 3) {
 }
 
 export function getCategoricalColumns(columns, data) {
+  const skipWords = ['id', 'name', 'code', 'number', 'address', 'phone', 'mail', 'pan', 'pin', 'ifsc']
   return columns.filter(col => {
-    const vals = [...new Set(data.map(r => r[col]).filter(v => v != null))]
-    return typeof vals[0] === 'string' && vals.length <= 20 && vals.length >= 2
+    const colLower = String(col).toLowerCase()
+    if (skipWords.some(w => colLower.includes(w))) return false
+    
+    const vals = [...new Set(data.map(r => r[col]).filter(v => v != null && String(v).trim() !== ''))]
+    return typeof vals[0] === 'string' && vals.length <= 10 && vals.length >= 2
   }).slice(0, 4)
 }

@@ -146,5 +146,5 @@ export default function ParticleSphere() {
     }
   }, [])
 
-  return <div ref={mountRef} className="absolute inset-0 z-0" style={{ background: '#0a0a0f' }} />
+  return <div ref={mountRef} className="absolute top-0 left-0 w-full h-full z-0 pointer-events-none" style={{ background: '#0a0a0f' }} />
 }

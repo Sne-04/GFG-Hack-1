@@ -6,7 +6,7 @@ import ParticleSphere from '../components/ParticleSphere'
 const features = [
   { icon: Upload, title: 'Upload Your Data', desc: 'Drag & drop any CSV file. We auto-detect schema, columns, and data types instantly.', color: 'from-indigo-500 to-violet-600' },
   { icon: MessageSquare, title: 'Ask in Plain English', desc: 'No SQL, no code needed. Just type your question and get answers from your data.', color: 'from-cyan-500 to-blue-600' },
-  { icon: BarChart3, title: 'Instant Visual Insights', desc: 'Beautiful charts, KPIs, and AI-powered analysis generated in seconds.', color: 'from-emerald-500 to-teal-600' }
+  { icon: BarChart3, title: 'Instant Visual Insights', desc: 'Beautiful charts, KPIs, and advanced analysis generated in seconds.', color: 'from-emerald-500 to-teal-600' }
 ]
 
 const steps = [
@@ -57,22 +57,41 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero — particle sphere contained here only */}
-      <section className="relative h-screen overflow-hidden">
+      <section className="relative w-full h-screen overflow-hidden">
         <ParticleSphere />
         <div className="relative z-10 h-full flex items-center justify-center px-4">
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="text-center max-w-2xl mx-auto">
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="text-center max-w-2xl mx-auto"
+            style={{
+              background: 'rgba(0,0,0,0.35)',
+              backdropFilter: 'blur(8px)',
+              borderRadius: '16px',
+              padding: '2rem 2.5rem',
+              border: '1px solid rgba(255,255,255,0.06)'
+            }}>
             <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2 }}
               className="glass inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-medium mb-6">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              AI-Powered Business Intelligence
+              Intelligent Business Insights
             </motion.div>
-            <h1 className="text-6xl md:text-7xl font-black tracking-tight mb-4">
-              <span className="glow-text">DataMind</span>{' '}
-              <span className="bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">AI</span>
+            <h1 className="mb-4" style={{
+              fontSize: 'clamp(3rem, 8vw, 5.5rem)',
+              fontWeight: 800,
+              color: '#ffffff',
+              textShadow: '0 0 40px rgba(99,102,241,0.9), 0 2px 20px rgba(0,0,0,0.8)',
+              letterSpacing: '-0.02em',
+              lineHeight: 1.1
+            }}>
+              DataMind AI
             </h1>
-            <p className="text-lg text-slate-400 mb-8 leading-relaxed">
+            <p className="mb-8" style={{
+              color: '#e2e8f0',
+              opacity: 1,
+              fontSize: '1.2rem',
+              textShadow: '0 2px 10px rgba(0,0,0,1)',
+              fontWeight: 400
+            }}>
               Ask your data anything.<br />
-              <span className="text-slate-300 font-medium">Get instant insights in seconds.</span>
+              <span className="font-medium">Get instant insights in seconds.</span>
             </p>
             <div className="flex gap-3 justify-center mb-6">
               <button onClick={() => nav('/dashboard')} className="glow-btn rounded-xl px-8 py-3.5 text-sm font-semibold flex items-center gap-2 text-white group">
@@ -83,7 +102,7 @@ export default function LandingPage() {
                 Explore Features
               </button>
             </div>
-            <p className="text-xs text-slate-500">No SQL needed • Upload any CSV • AI-Powered Analysis</p>
+            <p style={{ color: '#94a3b8', opacity: 1, fontSize: '0.85rem' }}>No SQL needed • Upload any CSV • Advanced Analysis</p>
           </motion.div>
         </div>
         <motion.div animate={{ y: [0, 10, 0] }} transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }} className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
@@ -92,7 +111,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features — solid bg, no particles */}
-      <section id="features" className="relative z-10 px-6 py-24 bg-[#0a0a0f]">
+      <section id="features" className="relative z-20 px-6 py-24 bg-[#0a0a0f]">
         <div className="max-w-5xl mx-auto">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-14">
             <h2 className="text-3xl font-bold mb-3">
@@ -116,7 +135,7 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works — solid bg */}
-      <section className="relative z-10 px-6 py-20 bg-[#0a0a0f]">
+      <section className="relative z-20 px-6 py-20 bg-[#0a0a0f]">
         <div className="max-w-4xl mx-auto">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-14">
             <h2 className="text-3xl font-bold mb-3">
@@ -148,7 +167,7 @@ export default function LandingPage() {
       </section>
 
       {/* Demo Preview — SVG donut chart instead of spinner */}
-      <section className="relative z-10 px-6 py-20 bg-[#0a0a0f]">
+      <section className="relative z-20 px-6 py-20 bg-[#0a0a0f]">
         <div className="max-w-4xl mx-auto">
           <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}
             className="glass rounded-2xl p-1 shadow-2xl shadow-primary/10">
@@ -195,13 +214,13 @@ export default function LandingPage() {
       </section>
 
       {/* Team Section — solid bg */}
-      <section className="relative z-10 px-6 py-20 bg-[#0a0a0f]">
+      <section className="relative z-20 px-6 py-20 bg-[#0a0a0f]">
         <div className="max-w-4xl mx-auto">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-14">
             <h2 className="text-3xl font-bold mb-3">
               Meet the <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Team</span>
             </h2>
-            <p className="text-sm text-slate-500">Built with passion for GFG Hackathon</p>
+            <p className="text-sm text-slate-500">Built with passion for GFG Hackfest 2026</p>
           </motion.div>
           <div className="grid md:grid-cols-2 gap-8 max-w-2xl mx-auto">
             {team.map((m, i) => (
@@ -231,7 +250,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer — solid bg */}
-      <footer className="relative z-10 border-t border-white/5 py-8 px-6 bg-[#0a0a0f]">
+      <footer className="relative z-20 border-t border-white/5 py-8 px-6 bg-[#0a0a0f]">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
@@ -239,7 +258,7 @@ export default function LandingPage() {
             </div>
             <span className="font-bold text-sm">DataMind AI</span>
           </div>
-          <p className="text-xs text-slate-500">Built for GFG Hackathon 2024</p>
+          <p className="text-xs text-slate-500">Built for GFG Hackfest 2026</p>
           <a href="https://github.com/Sne-04/GFG-Hack-1" target="_blank" rel="noopener" className="text-slate-500 hover:text-white transition-colors">
             <Github size={18} />
           </a>
