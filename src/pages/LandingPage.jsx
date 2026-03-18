@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Upload, MessageSquare, BarChart3, ChevronDown, ArrowRight, Github, Sparkles, Database, Linkedin, Users } from 'lucide-react'
+import { Upload, MessageSquare, BarChart3, ChevronDown, ArrowRight, Github, Sparkles, Database, Linkedin, Users, Twitter, Globe } from 'lucide-react'
 import ParticleSphere from '../components/ParticleSphere'
 
 const features = [
@@ -17,7 +17,8 @@ const steps = [
 
 const team = [
   { name: 'Sneha Shaw', role: 'Full Stack Developer', img: '/sneha.png', github: 'https://github.com/Sne-04', linkedin: 'https://www.linkedin.com/in/sneha-shaw23' },
-  { name: 'Sukanya Bhattacharya', role: 'AI/ML Engineer', img: '/sukanya.png', github: '', linkedin: 'https://www.linkedin.com/in/sukanya-bhattacharya-4658022b3' }
+  { name: 'Sukanya Bhattacharya', role: 'AI/ML Engineer', img: '/sukanya.png', github: '', linkedin: 'https://www.linkedin.com/in/sukanya-bhattacharya-4658022b3' },
+  { name: 'Gaurav Kumar Mehta', role: 'Full Stack MERN Developer', img: 'https://github.com/gaurav620.png', github: 'https://github.com/gaurav620', linkedin: 'https://www.linkedin.com/in/gaurav-kumar-mehta-6718571a6', website: 'https://www.gauravkumarmehta.com', twitter: 'https://twitter.com/GAURAV___06' }
 ]
 
 const DonutSVG = () => (
@@ -77,7 +78,7 @@ export default function LandingPage() {
               fontSize: 'clamp(3rem, 8vw, 5.5rem)',
               fontWeight: 800,
               color: '#ffffff',
-              textShadow: '0 0 40px rgba(99,102,241,0.9), 0 2px 20px rgba(0,0,0,0.8)',
+              textShadow: '0 0 30px rgba(99,102,241,0.4), 0 2px 10px rgba(0,0,0,0.8)',
               letterSpacing: '-0.02em',
               lineHeight: 1.1
             }}>
@@ -222,24 +223,34 @@ export default function LandingPage() {
             </h2>
             <p className="text-sm text-slate-500">Built with passion for GFG Hackfest 2026</p>
           </motion.div>
-          <div className="grid md:grid-cols-2 gap-8 max-w-2xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {team.map((m, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
                 transition={{ delay: i * 0.2 }} className="glass rounded-2xl p-6 text-center glass-hover transition-all duration-300 group">
                 <div className="w-24 h-24 rounded-full mx-auto mb-4 overflow-hidden ring-2 ring-primary/30 ring-offset-2 ring-offset-[#0a0a0f] group-hover:ring-primary/60 transition-all">
                   <img src={m.img} alt={m.name} className="w-full h-full object-cover" />
                 </div>
-                <h3 className="font-bold text-base mb-0.5">{m.name}</h3>
-                <p className="text-xs text-primary/80 font-medium mb-3">{m.role}</p>
-                <div className="flex items-center justify-center gap-3">
+                <h3 className="font-bold text-[15px] mb-0.5">{m.name}</h3>
+                <p className="text-[11px] text-primary/80 font-medium mb-3 h-8">{m.role}</p>
+                <div className="flex items-center justify-center gap-2">
                   {m.github && (
-                    <a href={m.github} target="_blank" rel="noopener" className="text-slate-500 hover:text-white transition-colors p-1.5 glass rounded-lg">
-                      <Github size={16} />
+                    <a href={m.github} target="_blank" rel="noopener" className="text-slate-500 hover:text-white transition-colors p-1.5 glass rounded-lg" title="GitHub">
+                      <Github size={14} />
                     </a>
                   )}
                   {m.linkedin && (
-                    <a href={m.linkedin} target="_blank" rel="noopener" className="text-slate-500 hover:text-blue-400 transition-colors p-1.5 glass rounded-lg">
-                      <Linkedin size={16} />
+                    <a href={m.linkedin} target="_blank" rel="noopener" className="text-slate-500 hover:text-blue-400 transition-colors p-1.5 glass rounded-lg" title="LinkedIn">
+                      <Linkedin size={14} />
+                    </a>
+                  )}
+                  {m.twitter && (
+                    <a href={m.twitter} target="_blank" rel="noopener" className="text-slate-500 hover:text-[#1DA1F2] transition-colors p-1.5 glass rounded-lg" title="Twitter">
+                      <Twitter size={14} />
+                    </a>
+                  )}
+                  {m.website && (
+                    <a href={m.website} target="_blank" rel="noopener" className="text-slate-500 hover:text-emerald-400 transition-colors p-1.5 glass rounded-lg" title="Website">
+                      <Globe size={14} />
                     </a>
                   )}
                 </div>

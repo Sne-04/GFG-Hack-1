@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Database, Plus, FileSpreadsheet, ChevronRight, AlertTriangle, Code, TrendingUp, Download, X } from 'lucide-react'
+import { Database, Plus, FileSpreadsheet, ChevronRight, AlertTriangle, Code, TrendingUp, Download, X, Sparkles } from 'lucide-react'
 import ParticleBackground from '../components/ParticleBackground'
 import CSVUpload from '../components/CSVUpload'
 import QueryInput from '../components/QueryInput'
@@ -25,15 +25,14 @@ export default function Dashboard() {
   const [recentQueries, setRecentQueries] = useState([])
   const [activeFilters, setActiveFilters] = useState({})
   const [apiKey] = useState(import.meta.env.VITE_OPENAI_API_KEY || '')
-  const [theme, setTheme] = useState('purple')
-  const [tab, setTab] = useState('queries')
+  const [theme, setTheme] = useState('indigo')
   const [resultTab, setResultTab] = useState('sql')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(false)
   const contentRef = useRef(null)
   const outputRef = useRef(null)
 
-  const themeColors = { purple: '#6366f1', cyan: '#22d3ee', green: '#10b981' }
+  const themeColors = { indigo: '#6366f1', emerald: '#10b981' }
 
   const handleUpload = useCallback(async (file) => {
     try {
@@ -71,7 +70,7 @@ export default function Dashboard() {
     setQuery('')
   }, [])
 
-  const handleQuery = useCallback(async (query) => {
+  const handleQuery = useCallback(async (query, overrideFilters = null) => {
     if (!csvData) { setError('Please upload a CSV file first'); return }
     if (!apiKey) { setError('API key not configured'); return }
     setLoading(true)
@@ -80,7 +79,8 @@ export default function Dashboard() {
     setRecentQueries(p => [query, ...p.filter(q => q !== query)].slice(0, 10))
 
     // Append active filters to query
-    const filterStr = Object.entries(activeFilters).filter(([,v]) => v).map(([k,v]) => `${k}=${v}`).join(', ')
+    const filtersToUse = overrideFilters || activeFilters
+    const filterStr = Object.entries(filtersToUse).filter(([,v]) => v).map(([k,v]) => `${k}=${v}`).join(', ')
     const fullQuery = filterStr ? `${query} (filter: ${filterStr})` : query
 
     try {
@@ -98,6 +98,16 @@ export default function Dashboard() {
     // Auto-scroll to results
     setTimeout(() => outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300)
   }, [csvData, schema, apiKey, activeFilters])
+
+  const handleFilterChange = useCallback((col, val) => {
+    setActiveFilters(p => {
+      const newFilters = { ...p, [col]: val }
+      if (result && result.query) {
+        setTimeout(() => handleQuery(result.query, newFilters), 0)
+      }
+      return newFilters
+    })
+  }, [result, handleQuery])
 
   const filters = csvData ? getCategoricalColumns(csvData.columns, csvData.data)
     .slice(0, 4)
@@ -200,16 +210,20 @@ export default function Dashboard() {
 
         <div id="dashboard-content" ref={contentRef} className="p-3 md:p-6 w-full max-w-5xl mx-auto flex-1 flex flex-col">
           {!csvData && !result && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-20">
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold mb-2">Welcome to <span className="text-primary">DataMind AI</span></h2>
-                <p className="text-sm text-slate-500">Upload a CSV to start analyzing your data</p>
-              </div>
-              <div className="max-w-md mx-auto space-y-4">
-                <CSVUpload onUpload={handleUpload} />
-                <button onClick={loadDemoData} className="w-full text-center border border-primary/30 text-primary hover:bg-primary/10 rounded-xl py-3 text-sm font-medium transition-colors">
-                  Try with demo data →
-                </button>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mt-16 sm:mt-24 max-w-2xl mx-auto w-full">
+              <div className="glass rounded-2xl p-8 sm:p-12 text-center border border-white/5 shadow-2xl shadow-primary/5 relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+                <div className="w-20 h-20 mx-auto bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center mb-6 ring-1 ring-white/10 group-hover:ring-primary/30 transition-all duration-500">
+                  <Database size={32} className="text-primary/80" />
+                </div>
+                <h2 className="text-3xl font-bold mb-3 tracking-tight text-white">Welcome to <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">DataMind AI</span></h2>
+                <p className="text-slate-400 mb-10 max-w-md mx-auto leading-relaxed">Instantly transform any raw CSV data into interactive intelligence. Upload your dataset or start with our playground data.</p>
+                <div className="max-w-xs mx-auto space-y-4 relative z-10 flex flex-col items-center">
+                  <div className="w-full"><CSVUpload onUpload={handleUpload} /></div>
+                  <button onClick={loadDemoData} className="w-full text-center border border-white/5 hover:border-primary/30 bg-black/40 hover:bg-primary/10 text-slate-300 hover:text-primary rounded-xl py-3.5 text-sm font-medium transition-all duration-300 flex items-center justify-center gap-2">
+                    <Sparkles size={16} /> Try with demo playground
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}
@@ -228,7 +242,7 @@ export default function Dashboard() {
               {/* Filter Bar */}
               {filters.length > 0 && (
                 <div className="mb-4">
-                  <FilterBar filters={filters} activeFilters={activeFilters} onChange={(col, val) => setActiveFilters(p => ({ ...p, [col]: val }))} />
+                  <FilterBar filters={filters} activeFilters={activeFilters} onChange={handleFilterChange} />
                 </div>
               )}
             </motion.div>
@@ -247,7 +261,7 @@ export default function Dashboard() {
           {result && !loading && (
             <motion.div ref={outputRef} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               {/* Filter Bar when result is shown - moved to top above main title */}
-              {filters.length > 0 && <div className="mb-4"><FilterBar filters={filters} activeFilters={activeFilters} onChange={(col, val) => setActiveFilters(p => ({ ...p, [col]: val }))} /></div>}
+              {filters.length > 0 && <div className="mb-4"><FilterBar filters={filters} activeFilters={activeFilters} onChange={handleFilterChange} /></div>}
 
               {/* Main Header Row with Title and Anomalies inline */}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
@@ -293,7 +307,7 @@ export default function Dashboard() {
                 <div className="glass rounded-xl p-4 mb-6 relative overflow-hidden group">
                   <div className="absolute top-0 left-0 w-1 h-full bg-primary/50"></div>
                   {resultTab === 'sql' && result.sql_logic && (
-                    <pre className="text-xs text-secondary font-mono bg-black/40 rounded-lg p-4 overflow-x-auto border border-white/5"><code>{result.sql_logic}</code></pre>
+                    <pre className="text-xs text-secondary font-mono bg-black/40 rounded-lg p-4 overflow-x-auto border border-white/5 whitespace-pre-wrap break-words"><code>{result.sql_logic}</code></pre>
                   )}
                   {resultTab === 'trend' && result.trend_analysis && (
                     <p className="text-sm text-slate-300 leading-relaxed px-2">{result.trend_analysis}</p>
@@ -359,31 +373,18 @@ export default function Dashboard() {
 
       {/* RIGHT PANEL */}
       <aside className={`fixed inset-y-0 right-0 bg-[#08080c] z-50 transform transition-transform md:relative md:translate-x-0 w-80 border-l border-white/5 flex flex-col shrink-0 ${isRightPanelOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-        <div className="flex border-b border-white/5 items-center">
-          <button className="md:hidden text-slate-400 hover:text-white px-4 border-r border-white/5" onClick={() => setIsRightPanelOpen(false)}>✕</button>
-          {['queries', 'chat', 'data'].map(t => (
-            <button key={t} onClick={() => setTab(t)} className={`flex-1 py-3 text-[10px] uppercase tracking-wider font-semibold transition-all ${tab === t ? 'text-primary border-b-2 border-primary' : 'text-slate-500 hover:text-slate-300'}`}>
-              {t === 'chat' ? 'AI Chat' : t}
-            </button>
-          ))}
+        <div className="flex border-b border-white/5 items-center p-4">
+          <button className="md:hidden text-slate-400 hover:text-white px-2 mr-2 border-r border-white/5" onClick={() => setIsRightPanelOpen(false)}>✕</button>
+          <span className="font-bold text-sm text-slate-200">Assistant & Data</span>
         </div>
-        <div className="flex-1 overflow-y-auto p-4">
-          {tab === 'queries' && (
-            <div className="space-y-2">
-              <p className="text-xs text-slate-400 mb-3">Query History</p>
-              {recentQueries.map((q, i) => (
-                <button key={i} onClick={() => handleQuery(q)} className="w-full text-left glass rounded-lg p-2 text-[10px] text-slate-300 hover:border-primary/20 transition-all">{q}</button>
-              ))}
-              {!recentQueries.length && <p className="text-[10px] text-slate-600 italic text-center mt-10">No queries yet.<br/>Upload data and ask a question!</p>}
-            </div>
-          )}
-          {tab === 'chat' && (
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-4 border-b border-white/5">
             <AIChat context={result ? JSON.stringify({ kpis: result.kpis, insight: result.ai_insight, query: result.query }) : 'No dashboard loaded yet'} apiKey={apiKey} />
-          )}
-          {tab === 'data' && csvData && (
-            <div className="space-y-2">
-              <p className="text-xs text-slate-400 mb-2">CSV Columns ({csvData.columns.length})</p>
-              <div className="space-y-1">
+          </div>
+          {csvData ? (
+            <div className="h-64 overflow-y-auto p-4 bg-black/20">
+              <p className="text-xs text-slate-400 mb-3 font-semibold tracking-wider uppercase">CSV Columns ({csvData.columns.length})</p>
+              <div className="space-y-1.5">
                 {csvData.columns.map(col => (
                   <div key={col} className="glass rounded-lg p-2">
                     <p className="text-[10px] font-medium text-slate-200">{col}</p>
@@ -392,8 +393,11 @@ export default function Dashboard() {
                 ))}
               </div>
             </div>
+          ) : (
+            <div className="h-64 flex items-center justify-center bg-black/20">
+              <p className="text-[10px] text-slate-600 italic">No data uploaded</p>
+            </div>
           )}
-          {tab === 'data' && !csvData && <p className="text-[10px] text-slate-600 italic text-center mt-10">No data uploaded</p>}
         </div>
       </aside>
     </div>
