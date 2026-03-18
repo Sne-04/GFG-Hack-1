@@ -63,7 +63,7 @@ export default function QueryInput({ onSubmit, hasData, recentQueries = [] }) {
             className="flex-1 bg-transparent py-3 text-sm outline-none text-slate-200 placeholder:text-slate-500"
           />
         </div>
-        <button onClick={() => handleSubmit()} className="glow-btn rounded-xl px-5 flex items-center gap-2 text-sm font-medium text-white shrink-0">
+        <button onClick={() => handleSubmit()} aria-label="Send query" className="glow-btn rounded-xl px-5 flex items-center gap-2 text-sm font-medium text-white shrink-0">
           <Send size={14}/>Send
         </button>
       </motion.div>

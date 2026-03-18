@@ -7,8 +7,8 @@ export default function CSVUpload({ onUpload, compact = false }) {
   const handleFile = useCallback((file) => {
     if (!file) return
     const ext = file.name.split('.').pop().toLowerCase()
-    if (!['csv','xlsx','xls'].includes(ext)) {
-      alert('Please upload a valid CSV file')
+    if (ext !== 'csv') {
+      alert('Please upload a .csv file')
       return
     }
     if (file.size > MAX_FILE_SIZE) {
@@ -33,7 +33,7 @@ export default function CSVUpload({ onUpload, compact = false }) {
       >
         <Upload size={16} className="mx-auto mb-1 text-slate-500 group-hover:text-primary transition-colors"/>
         <span className="text-[10px] text-slate-500">Upload CSV</span>
-        <input type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={e => handleFile(e.target.files?.[0])}/>
+        <input type="file" accept=".csv" className="hidden" onChange={e => handleFile(e.target.files?.[0])}/>
       </label>
     )
   }
@@ -48,7 +48,7 @@ export default function CSVUpload({ onUpload, compact = false }) {
       <Upload size={40} className="mx-auto mb-3 text-slate-500 group-hover:text-primary transition-colors animate-float"/>
       <h3 className="text-sm font-medium text-slate-300 mb-1">Drop your CSV file here</h3>
       <span className="text-xs text-slate-500">or click to browse</span>
-      <input type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={e => handleFile(e.target.files?.[0])}/>
+      <input type="file" accept=".csv" className="hidden" onChange={e => handleFile(e.target.files?.[0])}/>
     </label>
   )
 }

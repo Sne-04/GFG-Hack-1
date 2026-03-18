@@ -38,6 +38,9 @@ export default function ParticleSphere() {
     const mount = mountRef.current
     if (!mount) return
 
+    // Respect prefers-reduced-motion
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
     const scene = new THREE.Scene()
     scene.fog = new THREE.FogExp2(0x0a0a0f, 0.025)
 
@@ -141,6 +144,9 @@ export default function ParticleSphere() {
     return () => {
       cancelAnimationFrame(frameRef.current)
       window.removeEventListener('resize', handleResize)
+      geo.dispose()
+      mat.dispose()
+      starGeo.dispose()
       renderer.dispose()
       mount.removeChild(renderer.domElement)
     }
