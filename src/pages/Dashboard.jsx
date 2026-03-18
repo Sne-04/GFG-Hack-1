@@ -14,6 +14,8 @@ import Header from '../components/Header'
 import AIChat from '../components/AIChat'
 import { parseCSV, getSchema, getSampleRows, getCategoricalColumns } from '../utils/csvParser'
 import { queryOpenAI } from '../utils/openaiApi'
+import { buildPreComputedContext } from '../utils/dataEngine'
+import { validateAndFixResponse } from '../utils/responseValidator'
 
 export default function Dashboard() {
   const [csvData, setCsvData] = useState(null)
@@ -81,12 +83,16 @@ export default function Dashboard() {
     const fullQuery = filterStr ? `${query} (filter: ${filterStr})` : query
 
     try {
-      const sample = getSampleRows(csvData.data)
-      const res = await queryOpenAI(fullQuery, schema, sample, csvData.rowCount)
+      const sample = getSampleRows(csvData.data, 10)
+      // Pre-compute real stats from all data rows
+      const preComputed = buildPreComputedContext(csvData.data, csvData.columns, schema)
+      const res = await queryOpenAI(fullQuery, schema, sample, csvData.rowCount, [], preComputed)
       if (res.cannot_answer) {
         setError(res.cannot_answer_reason || 'Cannot answer this question with available data.')
       } else {
-        setResult({ ...res, query })
+        // Validate and fix AI response against real computed data
+        const validated = validateAndFixResponse(res, preComputed, csvData.columns)
+        setResult({ ...validated, query })
       }
     } catch (e) {
       setError(e.message || 'AI is thinking... please retry')
@@ -381,7 +387,10 @@ export default function Dashboard() {
               if (csvData) {
                 parts.push(`CSV Columns: ${csvData.columns.join(', ')}`)
                 parts.push(`Total Rows: ${csvData.rowCount}`)
-                parts.push(`Sample Data (first 10 rows): ${JSON.stringify(csvData.data.slice(0, 10))}`)
+                // Include pre-computed stats for accurate chat responses
+                const chatStats = buildPreComputedContext(csvData.data, csvData.columns, schema)
+                parts.push(`Column Statistics: ${JSON.stringify(chatStats.stats)}`)
+                if (chatStats.anomalies.length) parts.push(`Data Anomalies: ${chatStats.anomalies.join('; ')}`)
               }
               if (result) {
                 parts.push(`Dashboard KPIs: ${JSON.stringify(result.kpis)}`)
