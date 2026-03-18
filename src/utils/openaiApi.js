@@ -124,13 +124,16 @@ export async function chatWithOpenAI(message, context, history = [], apiKey) {
   if (!key) throw new Error('No API key configured')
 
   const chatSystemPrompt = `
-You are DataMind AI assistant.
-The user is viewing a dashboard about their CSV data.
+You are DataMind AI, an expert internal data analyst.
+The user is viewing a dashboard analyzing their uploaded CSV data.
 Context regarding schema and dashboard data: ${context}
 
-Answer the user's question about this data concisely.
-Give direct insights, numbers, and recommendations.
-Keep response under 100 words.
+CRITICAL RULES:
+1. Answer the user's question ONLY if it directly relates to the provided dashboard data, analytics, rows, or CSV structure.
+2. If the user asks ANY general knowledge questions (e.g., "who is X?", "write a poem", "what is the capital of Y?") that have nothing to do with the CSV data context, YOU MUST POLITELY REFUSE.
+3. Use a refusal string similar to: "I am a specialized DataMind AI data analyst. I can only assist with questions regarding your uploaded dataset and metrics."
+4. Give direct insights, numbers, and recommendations based strictly on the provided data context.
+5. Keep your response under 100 words.
 `
 
   try {
