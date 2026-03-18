@@ -61,14 +61,7 @@ export default function LandingPage() {
       <section className="relative w-full h-screen overflow-hidden">
         <ParticleSphere />
         <div className="relative z-10 h-full flex items-center justify-center px-4">
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="text-center max-w-2xl mx-auto"
-            style={{
-              background: 'rgba(0,0,0,0.35)',
-              backdropFilter: 'blur(8px)',
-              borderRadius: '16px',
-              padding: '2rem 2.5rem',
-              border: '1px solid rgba(255,255,255,0.06)'
-            }}>
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="text-center max-w-4xl mx-auto">
             <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2 }}
               className="glass inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-medium mb-6">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
