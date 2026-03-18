@@ -33,10 +33,15 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      '/api': {
+      '/api/chat': {
         target: 'https://api.openai.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        rewrite: () => '/v1/chat/completions',
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('Authorization', `Bearer ${process.env.OPENAI_API_KEY || ''}`)
+          })
+        }
       }
     }
   }

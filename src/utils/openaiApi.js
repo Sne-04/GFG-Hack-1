@@ -1,4 +1,14 @@
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || ''
+// Rate limiter: prevents API calls within cooldown period
+let lastCallTime = 0
+const RATE_LIMIT_MS = 2000
+
+function checkRateLimit() {
+  const now = Date.now()
+  if (now - lastCallTime < RATE_LIMIT_MS) {
+    throw new Error('Please wait a moment before sending another request.')
+  }
+  lastCallTime = now
+}
 
 function buildSystemPrompt(schema, sampleData, rowCount) {
   return `You are DataMind AI, a world-class business intelligence analyst.
@@ -88,32 +98,11 @@ function parseAIResponse(text) {
   }
 }
 
-export async function queryOpenAI(query, schema, sampleData, rowCount, conversationHistory = [], apiKey) {
-  const key = apiKey || OPENAI_API_KEY
-  if (!key) throw new Error('No API key configured')
-
-  const systemPrompt = buildSystemPrompt(
-    typeof schema === 'string' ? schema : JSON.stringify(schema),
-    typeof sampleData === 'string' ? sampleData : JSON.stringify(sampleData),
-    rowCount
-  )
-
-  const response = await fetch('/api/v1/chat/completions', {
+async function callAPI(body) {
+  const response = await fetch('/api/chat', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${key}`
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o',
-      max_tokens: 4096,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: 'system', content: systemPrompt },
-        ...conversationHistory.map(m => ({ role: m.role, content: m.content })),
-        { role: 'user', content: query }
-      ]
-    })
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
   })
 
   if (!response.ok) {
@@ -121,14 +110,35 @@ export async function queryOpenAI(query, schema, sampleData, rowCount, conversat
     throw new Error(err.error?.message || `API error: ${response.status}`)
   }
 
-  const data = await response.json()
+  return response.json()
+}
+
+export async function queryOpenAI(query, schema, sampleData, rowCount, conversationHistory = []) {
+  checkRateLimit()
+
+  const systemPrompt = buildSystemPrompt(
+    typeof schema === 'string' ? schema : JSON.stringify(schema),
+    typeof sampleData === 'string' ? sampleData : JSON.stringify(sampleData),
+    rowCount
+  )
+
+  const data = await callAPI({
+    model: 'gpt-4o',
+    max_tokens: 4096,
+    response_format: { type: "json_object" },
+    messages: [
+      { role: 'system', content: systemPrompt },
+      ...conversationHistory.map(m => ({ role: m.role, content: m.content })),
+      { role: 'user', content: query }
+    ]
+  })
+
   const text = data.choices?.[0]?.message?.content || ''
   return parseAIResponse(text)
 }
 
-export async function chatWithOpenAI(message, context, history = [], apiKey) {
-  const key = apiKey || OPENAI_API_KEY
-  if (!key) throw new Error('No API key configured')
+export async function chatWithOpenAI(message, context, history = []) {
+  checkRateLimit()
 
   const chatSystemPrompt = `You are DataMind AI, a strict internal data analyst assistant.
 
@@ -146,30 +156,15 @@ ABSOLUTE RULES — YOU MUST FOLLOW THESE WITHOUT EXCEPTION:
 7. Always reference actual column names and values from the dataset.`
 
   try {
-    const response = await fetch('/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${key}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        max_tokens: 1024,
-        messages: [
-          { role: 'system', content: chatSystemPrompt },
-          ...history,
-          { role: 'user', content: message }
-        ]
-      })
+    const data = await callAPI({
+      model: 'gpt-4o',
+      max_tokens: 1024,
+      messages: [
+        { role: 'system', content: chatSystemPrompt },
+        ...history,
+        { role: 'user', content: message }
+      ]
     })
-
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}))
-      console.error('Chat API Error:', err)
-      throw new Error(err.error?.message || 'Chat API error')
-    }
-    
-    const data = await response.json()
     return data.choices?.[0]?.message?.content || 'Sorry, I could not generate a response.'
   } catch (error) {
     console.error('Error in chatWithOpenAI:', error)
