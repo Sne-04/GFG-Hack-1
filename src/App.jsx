@@ -1,9 +1,13 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
+import { AuthProvider } from './contexts/AuthContext'
+import AuthGuard from './components/AuthGuard'
 
 const LandingPage = lazy(() => import('./pages/LandingPage'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Login = lazy(() => import('./pages/Login'))
+const Signup = lazy(() => import('./pages/Signup'))
 
 function LoadingFallback() {
   return (
@@ -16,24 +20,32 @@ function LoadingFallback() {
   )
 }
 
+function AnimatedRoute({ children }) {
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
+      {children}
+    </motion.div>
+  )
+}
+
 export default function App() {
   const location = useLocation()
   return (
-    <Suspense fallback={<LoadingFallback />}>
-      <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
-          <Route path="/" element={
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
-              <LandingPage />
-            </motion.div>
-          }/>
-          <Route path="/dashboard" element={
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
-              <Dashboard />
-            </motion.div>
-          }/>
-        </Routes>
-      </AnimatePresence>
-    </Suspense>
+    <AuthProvider>
+      <Suspense fallback={<LoadingFallback />}>
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<AnimatedRoute><LandingPage /></AnimatedRoute>} />
+            <Route path="/login" element={<AnimatedRoute><Login /></AnimatedRoute>} />
+            <Route path="/signup" element={<AnimatedRoute><Signup /></AnimatedRoute>} />
+            <Route path="/dashboard" element={
+              <AnimatedRoute>
+                <AuthGuard><Dashboard /></AuthGuard>
+              </AnimatedRoute>
+            } />
+          </Routes>
+        </AnimatePresence>
+      </Suspense>
+    </AuthProvider>
   )
 }
