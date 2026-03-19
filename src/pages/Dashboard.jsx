@@ -1,6 +1,6 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Database, Plus, FileSpreadsheet, ChevronRight, AlertTriangle, Code, TrendingUp, Download, X, Sparkles } from 'lucide-react'
+import { Database, Plus, FileSpreadsheet, ChevronRight, AlertTriangle, Code, TrendingUp, Download, X, Sparkles, Save } from 'lucide-react'
 import ParticleBackground from '../components/ParticleBackground'
 import CSVUpload from '../components/CSVUpload'
 import QueryInput from '../components/QueryInput'
@@ -12,12 +12,16 @@ import InsightBanner from '../components/InsightBanner'
 import FilterBar from '../components/FilterBar'
 import Header from '../components/Header'
 import AIChat from '../components/AIChat'
+import UserMenu from '../components/UserMenu'
+import { useAuth } from '../contexts/AuthContext'
 import { parseCSV, getSchema, getSampleRows, getCategoricalColumns } from '../utils/csvParser'
 import { queryOpenAI } from '../utils/openaiApi'
 import { buildPreComputedContext } from '../utils/dataEngine'
 import { validateAndFixResponse } from '../utils/responseValidator'
+import { saveQuery, getRecentQueries, saveDashboard } from '../utils/supabase'
 
 export default function Dashboard() {
+  const { user, supabaseEnabled } = useAuth()
   const [csvData, setCsvData] = useState(null)
   const [csvFile, setCsvFile] = useState(null)
   const [schema, setSchema] = useState(null)
@@ -30,8 +34,20 @@ export default function Dashboard() {
   const [resultTab, setResultTab] = useState('sql')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(false)
+  const [saved, setSaved] = useState(false)
   const contentRef = useRef(null)
   const outputRef = useRef(null)
+
+  // Load recent queries from DB on mount
+  useEffect(() => {
+    if (user && supabaseEnabled) {
+      getRecentQueries(user.id, 10).then(queries => {
+        if (queries.length) {
+          setRecentQueries(queries.map(q => q.query_text))
+        }
+      }).catch(() => {})
+    }
+  }, [user, supabaseEnabled])
 
   const themeColors = { indigo: '#6366f1', emerald: '#10b981' }
 
@@ -93,6 +109,11 @@ export default function Dashboard() {
         // Validate and fix AI response against real computed data
         const validated = validateAndFixResponse(res, preComputed, csvData.columns)
         setResult({ ...validated, query })
+        setSaved(false)
+        // Save query to DB if authenticated
+        if (user && supabaseEnabled) {
+          saveQuery(user.id, query, validated, csvFile).catch(() => {})
+        }
       }
     } catch (e) {
       setError(e.message || 'AI is thinking... please retry')
@@ -100,7 +121,7 @@ export default function Dashboard() {
     setLoading(false)
     // Auto-scroll to results
     setTimeout(() => outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300)
-  }, [csvData, schema, activeFilters])
+  }, [csvData, schema, activeFilters, user, supabaseEnabled, csvFile])
 
   const handleFilterChange = useCallback((col, val) => {
     setActiveFilters(p => {
@@ -191,9 +212,12 @@ export default function Dashboard() {
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 text-[9px] text-emerald-400">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></div>
-            Ready
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-[9px] text-emerald-400">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></div>
+              Ready
+            </div>
+            <UserMenu />
           </div>
         </div>
       </aside>
@@ -278,19 +302,30 @@ export default function Dashboard() {
                       <div className="w-1.5 h-1.5 rounded-full bg-red-400"/> {a}
                     </span>
                   ))}
+                  {user && supabaseEnabled && (
+                    <button onClick={async () => {
+                      try {
+                        await saveDashboard(user.id, csvFile, schema, result, result.query)
+                        setSaved(true)
+                      } catch (e) { console.error(e) }
+                    }} disabled={saved}
+                      className={`glass rounded-lg px-4 py-2 text-xs font-medium flex items-center gap-2 transition-all ml-2 ${saved ? 'text-emerald-400 border-emerald-500/30' : 'hover:border-primary/30'}`}>
+                      <Save size={14}/>{saved ? 'Saved' : 'Save'}
+                    </button>
+                  )}
                   <button onClick={() => {
                     import('html2canvas').then(({ default: html2canvas }) => {
                       const el = document.getElementById('dashboard-content');
                       if (!el) return;
                       html2canvas(el, { backgroundColor: '#0a0a0f', scale: 2 }).then(canvas => {
                         const link = document.createElement('a');
-                        link.download = 'insightforge-dashboard.png';
+                        link.download = 'datamind-dashboard.png';
                         link.href = canvas.toDataURL();
                         link.click();
                       });
                     });
-                  }} className="glass rounded-lg px-4 py-2 text-xs font-medium flex items-center gap-2 hover:border-primary/30 transition-all ml-4">
-                    <Download size={14}/>Export Dashboard
+                  }} className="glass rounded-lg px-4 py-2 text-xs font-medium flex items-center gap-2 hover:border-primary/30 transition-all ml-2">
+                    <Download size={14}/>Export
                   </button>
                 </div>
               </div>
