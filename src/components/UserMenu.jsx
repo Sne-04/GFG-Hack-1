@@ -90,16 +90,16 @@ export default function UserMenu() {
 
             {/* Menu items */}
             <div className="p-1.5">
-              <button className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] text-slate-300 hover:text-slate-100 hover:bg-white/5 rounded-lg transition-colors">
+              <button onClick={() => { setOpen(false); navigate('/settings?tab=profile') }} className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] text-slate-300 hover:text-slate-100 hover:bg-white/5 rounded-lg transition-colors">
                 <User size={13} className="text-slate-500" /> My Profile
               </button>
-              <button className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] text-slate-300 hover:text-slate-100 hover:bg-white/5 rounded-lg transition-colors">
+              <button onClick={() => { setOpen(false); navigate('/settings?tab=settings') }} className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] text-slate-300 hover:text-slate-100 hover:bg-white/5 rounded-lg transition-colors">
                 <Settings size={13} className="text-slate-500" /> Settings
               </button>
-              <button className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] text-slate-300 hover:text-slate-100 hover:bg-white/5 rounded-lg transition-colors">
+              <button onClick={() => { setOpen(false); navigate('/settings?tab=billing') }} className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] text-slate-300 hover:text-slate-100 hover:bg-white/5 rounded-lg transition-colors">
                 <CreditCard size={13} className="text-slate-500" /> Billing & Plan
               </button>
-              <button className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] text-slate-300 hover:text-slate-100 hover:bg-white/5 rounded-lg transition-colors">
+              <button onClick={() => { setOpen(false); navigate('/settings?tab=security') }} className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] text-slate-300 hover:text-slate-100 hover:bg-white/5 rounded-lg transition-colors">
                 <Shield size={13} className="text-slate-500" /> Privacy & Security
               </button>
             </div>
