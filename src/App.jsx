@@ -11,6 +11,7 @@ const Signup = lazy(() => import('./pages/Signup'))
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 const Settings = lazy(() => import('./pages/Settings'))
+const Pricing = lazy(() => import('./pages/Pricing'))
 
 function LoadingFallback() {
   return (
@@ -43,6 +44,7 @@ export default function App() {
             <Route path="/signup" element={<AnimatedRoute><Signup /></AnimatedRoute>} />
             <Route path="/forgot-password" element={<AnimatedRoute><ForgotPassword /></AnimatedRoute>} />
             <Route path="/reset-password" element={<AnimatedRoute><ResetPassword /></AnimatedRoute>} />
+            <Route path="/pricing" element={<AnimatedRoute><Pricing /></AnimatedRoute>} />
             <Route path="/settings" element={
               <AnimatedRoute>
                 <AuthGuard><Settings /></AuthGuard>

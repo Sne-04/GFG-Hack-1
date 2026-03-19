@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { Database, User, Settings as SettingsIcon, CreditCard, Shield, ArrowLeft, Camera, Save, Check, Lock, Eye, EyeOff, Trash2, AlertTriangle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase, upsertProfile, getProfile } from '../utils/supabase'
+import { PLANS, getPlan, formatPrice } from '../utils/quota'
 
 const TABS = [
   { id: 'profile', label: 'My Profile', icon: User },
@@ -13,7 +14,9 @@ const TABS = [
 ]
 
 export default function SettingsPage() {
-  const { user } = useAuth()
+  const { user, plan: userPlan, refreshPlan } = useAuth()
+  const [billingPeriod, setBillingPeriod] = useState('monthly')
+  const [upgrading, setUpgrading] = useState(null)
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'profile')
@@ -252,52 +255,140 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Current Plan */}
-                  <div className="glass rounded-2xl p-6 border border-primary/20 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
-                    <div className="relative z-10">
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <span className="text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-primary/15 text-primary border border-primary/20">
-                            Current Plan
-                          </span>
+                  {(() => {
+                    const currentPlan = getPlan(userPlan)
+                    return (
+                      <div className="glass rounded-2xl p-6 border border-primary/20 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
+                        <div className="relative z-10">
+                          <div className="flex items-center justify-between mb-4">
+                            <span className="text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-primary/15 text-primary border border-primary/20">
+                              Current Plan
+                            </span>
+                            {userPlan !== 'free' && (
+                              <span className="text-[9px] text-slate-500">Renews automatically</span>
+                            )}
+                          </div>
+                          <h3 className="text-2xl font-black text-white mb-1">{currentPlan.name}</h3>
+                          <p className="text-xs text-slate-400 mb-4">
+                            {userPlan === 'free' ? 'Basic features for personal use' : `${currentPlan.limits.queriesPerDay === -1 ? 'Unlimited' : currentPlan.limits.queriesPerDay} queries/day • ${currentPlan.limits.csvMaxSizeMB}MB uploads`}
+                          </p>
+                          <div className="space-y-2 text-xs text-slate-400">
+                            {currentPlan.features.slice(0, 4).map((f, i) => (
+                              <div key={i} className="flex items-center gap-2"><Check size={12} className="text-emerald-400" /> {f}</div>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                      <h3 className="text-2xl font-black text-white mb-1">Free</h3>
-                      <p className="text-xs text-slate-400 mb-4">Basic features for personal use</p>
-                      <div className="space-y-2 text-xs text-slate-400">
-                        <div className="flex items-center gap-2"><Check size={12} className="text-emerald-400" /> 5 queries per day</div>
-                        <div className="flex items-center gap-2"><Check size={12} className="text-emerald-400" /> CSV upload up to 10MB</div>
-                        <div className="flex items-center gap-2"><Check size={12} className="text-emerald-400" /> Basic charts & KPIs</div>
-                        <div className="flex items-center gap-2"><Check size={12} className="text-emerald-400" /> Query history (last 20)</div>
-                      </div>
+                    )
+                  })()}
+
+                  {/* Billing toggle */}
+                  {userPlan === 'free' && (
+                    <div className="flex items-center justify-center gap-3">
+                      <span className={`text-xs ${billingPeriod === 'monthly' ? 'text-white font-medium' : 'text-slate-500'}`}>Monthly</span>
+                      <button
+                        onClick={() => setBillingPeriod(b => b === 'monthly' ? 'yearly' : 'monthly')}
+                        className={`relative w-12 h-6 rounded-full transition-colors ${billingPeriod === 'yearly' ? 'bg-primary' : 'bg-white/10'}`}
+                      >
+                        <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${billingPeriod === 'yearly' ? 'left-7' : 'left-1'}`} />
+                      </button>
+                      <span className={`text-xs ${billingPeriod === 'yearly' ? 'text-white font-medium' : 'text-slate-500'}`}>
+                        Yearly <span className="text-emerald-400 text-[10px]">Save 17%</span>
+                      </span>
                     </div>
-                  </div>
+                  )}
 
                   {/* Upgrade Cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="glass rounded-2xl p-5 border border-white/5 hover:border-primary/30 transition-all">
-                      <h4 className="font-bold text-white text-sm mb-0.5">Pro</h4>
-                      <p className="text-xl font-black text-primary mb-2">$19<span className="text-xs text-slate-500 font-normal">/mo</span></p>
-                      <div className="space-y-1.5 text-[10px] text-slate-400 mb-4">
-                        <div className="flex items-center gap-1.5"><Check size={10} className="text-emerald-400" /> Unlimited queries</div>
-                        <div className="flex items-center gap-1.5"><Check size={10} className="text-emerald-400" /> CSV up to 100MB</div>
-                        <div className="flex items-center gap-1.5"><Check size={10} className="text-emerald-400" /> Advanced analytics</div>
-                        <div className="flex items-center gap-1.5"><Check size={10} className="text-emerald-400" /> Priority AI responses</div>
-                      </div>
-                      <button className="w-full glow-btn rounded-lg py-2 text-xs font-semibold text-white">Upgrade to Pro</button>
-                    </div>
+                  {userPlan === 'free' && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {['pro', 'enterprise'].map(planId => {
+                        const p = getPlan(planId)
+                        const price = billingPeriod === 'yearly' ? p.priceYearly : p.priceMonthly
+                        const isPro = planId === 'pro'
 
-                    <div className="glass rounded-2xl p-5 border border-white/5 hover:border-secondary/30 transition-all">
-                      <h4 className="font-bold text-white text-sm mb-0.5">Enterprise</h4>
-                      <p className="text-xl font-black text-secondary mb-2">$99<span className="text-xs text-slate-500 font-normal">/mo</span></p>
-                      <div className="space-y-1.5 text-[10px] text-slate-400 mb-4">
-                        <div className="flex items-center gap-1.5"><Check size={10} className="text-emerald-400" /> Everything in Pro</div>
-                        <div className="flex items-center gap-1.5"><Check size={10} className="text-emerald-400" /> Team collaboration</div>
-                        <div className="flex items-center gap-1.5"><Check size={10} className="text-emerald-400" /> API access</div>
-                        <div className="flex items-center gap-1.5"><Check size={10} className="text-emerald-400" /> Custom integrations</div>
-                      </div>
-                      <button className="w-full border border-secondary/30 text-secondary hover:bg-secondary/10 rounded-lg py-2 text-xs font-semibold transition-colors">Contact Sales</button>
+                        const handleUpgrade = async () => {
+                          if (planId === 'enterprise') {
+                            window.open('mailto:support@datamind.ai?subject=Enterprise%20Plan%20Inquiry', '_blank')
+                            return
+                          }
+                          setUpgrading(planId)
+                          try {
+                            const res = await fetch('/api/razorpay-order', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ plan: planId, billing: billingPeriod, userId: user.id, userEmail: user.email }),
+                            })
+                            const data = await res.json()
+                            if (!res.ok) throw new Error(data.error)
+
+                            const options = {
+                              key: data.keyId,
+                              amount: data.amount,
+                              currency: data.currency,
+                              name: 'DataMind AI',
+                              description: `${p.name} Plan — ${billingPeriod === 'yearly' ? 'Annual' : 'Monthly'}`,
+                              order_id: data.orderId,
+                              prefill: { email: user.email, name: user.user_metadata?.name || '' },
+                              theme: { color: '#6366f1' },
+                              handler: async (response) => {
+                                const verifyRes = await fetch('/api/razorpay-verify', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ ...response, plan: planId, billing: billingPeriod, userId: user.id }),
+                                })
+                                const verifyData = await verifyRes.json()
+                                if (verifyData.success) {
+                                  refreshPlan(user.id)
+                                  setSaved(true)
+                                  setTimeout(() => setSaved(false), 3000)
+                                } else {
+                                  alert('Payment verification failed. Contact support if money was deducted.')
+                                }
+                              },
+                              modal: { ondismiss: () => setUpgrading(null) },
+                            }
+                            const razorpay = new window.Razorpay(options)
+                            razorpay.open()
+                          } catch (err) {
+                            alert(err.message || 'Something went wrong')
+                          } finally {
+                            setUpgrading(null)
+                          }
+                        }
+
+                        return (
+                          <div key={planId} className={`glass rounded-2xl p-5 border transition-all ${isPro ? 'border-white/5 hover:border-primary/30' : 'border-white/5 hover:border-secondary/30'}`}>
+                            <h4 className="font-bold text-white text-sm mb-0.5">{p.name}</h4>
+                            <p className={`text-xl font-black mb-1 ${isPro ? 'text-primary' : 'text-secondary'}`}>
+                              {formatPrice(price)}<span className="text-xs text-slate-500 font-normal">/{billingPeriod === 'yearly' ? 'yr' : 'mo'}</span>
+                            </p>
+                            {billingPeriod === 'yearly' && (
+                              <p className="text-[9px] text-emerald-400 mb-2">Save {formatPrice(p.priceMonthly * 12 - p.priceYearly)}/year</p>
+                            )}
+                            <div className="space-y-1.5 text-[10px] text-slate-400 mb-4">
+                              {p.features.slice(0, 4).map((f, i) => (
+                                <div key={i} className="flex items-center gap-1.5"><Check size={10} className="text-emerald-400" /> {f}</div>
+                              ))}
+                            </div>
+                            <button
+                              onClick={handleUpgrade}
+                              disabled={upgrading === planId}
+                              className={`w-full rounded-lg py-2 text-xs font-semibold transition-all ${
+                                isPro ? 'glow-btn text-white' : 'border border-secondary/30 text-secondary hover:bg-secondary/10'
+                              } ${upgrading === planId ? 'opacity-50 cursor-wait' : ''}`}
+                            >
+                              {upgrading === planId ? 'Processing...' : isPro ? 'Upgrade to Pro' : 'Contact Sales'}
+                            </button>
+                          </div>
+                        )
+                      })}
                     </div>
+                  )}
+
+                  {/* View all plans link */}
+                  <div className="text-center">
+                    <Link to="/pricing" className="text-xs text-primary hover:underline">View detailed plan comparison →</Link>
                   </div>
                 </div>
               )}

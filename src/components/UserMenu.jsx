@@ -4,9 +4,10 @@ import { LogOut, User, ChevronDown, Settings, Shield, CreditCard } from 'lucide-
 import { useAuth } from '../contexts/AuthContext'
 import { signOut } from '../utils/supabase'
 import { motion, AnimatePresence } from 'framer-motion'
+import { getPlan } from '../utils/quota'
 
 export default function UserMenu() {
-  const { user, supabaseEnabled } = useAuth()
+  const { user, supabaseEnabled, plan: userPlan } = useAuth()
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   const navigate = useNavigate()
@@ -25,7 +26,8 @@ export default function UserMenu() {
   const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
   const email = user.email || ''
   const avatarUrl = user.user_metadata?.avatar_url || null
-  const plan = 'Free' // will be dynamic with Stripe in Phase 4
+  const planConfig = getPlan(userPlan)
+  const plan = planConfig.name
 
   const handleSignOut = async () => {
     try {
