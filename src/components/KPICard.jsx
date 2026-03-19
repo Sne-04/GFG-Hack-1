@@ -23,13 +23,13 @@ export default function KPICard({ label, value, unit, trend, trendDirection, del
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: delay * 0.15, duration: 0.5 }}
-      className="relative overflow-hidden bg-gradient-to-br from-[#13141f] to-[#0c0d14] rounded-2xl p-5 border border-white/10 shadow-lg group hover:border-primary/30 transition-all duration-500 cursor-default"
+      className="relative overflow-hidden bg-gradient-to-br from-[#13141f] to-[#0c0d14] rounded-2xl p-4 sm:p-5 border border-white/10 shadow-lg group hover:border-primary/30 transition-all duration-500 cursor-default min-w-0"
     >
       <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all duration-700" />
 
       <p className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold mb-3 relative z-10">{label}</p>
       
-      <motion.p className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-400 mb-2 relative z-10 tracking-tight">
+      <motion.p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-400 mb-2 relative z-10 tracking-tight truncate">
         {display}
       </motion.p>
       
