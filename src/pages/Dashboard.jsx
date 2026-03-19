@@ -417,7 +417,7 @@ export default function Dashboard() {
 
           {/* Query Input */}
           {csvData && (
-            <div className="sticky bottom-0 mt-auto z-30 pt-4 pb-4 md:pb-2 bg-[#08080c] md:bg-gradient-to-t md:from-[#08080c] md:via-[#08080c]/90 md:to-transparent border-t border-white/5 md:border-t-0 p-3 md:p-0">
+            <div className={`sticky bottom-0 mt-auto z-30 pt-4 pb-4 md:pb-2 border-t md:border-t-0 p-3 md:p-0 ${darkMode ? 'bg-[#08080c] md:bg-gradient-to-t md:from-[#08080c] md:via-[#08080c]/90 md:to-transparent border-white/5' : 'bg-[#f4f6f9] md:bg-gradient-to-t md:from-[#f4f6f9] md:via-[#f4f6f9]/90 md:to-transparent border-slate-200'}`}>
               <QueryInput onSubmit={handleQuery} hasData={!!csvData} recentQueries={recentQueries} />
             </div>
           )}
@@ -428,7 +428,7 @@ export default function Dashboard() {
       {isRightPanelOpen && <div className="fixed inset-0 bg-black/70 z-40 md:hidden" onClick={() => setIsRightPanelOpen(false)} />}
 
       {/* RIGHT PANEL */}
-      <aside className={`fixed inset-y-0 right-0 bg-[#08080c] z-50 transform transition-transform md:relative md:translate-x-0 w-80 border-l border-white/5 flex flex-col shrink-0 ${isRightPanelOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 right-0 z-50 transform transition-all md:relative md:translate-x-0 w-80 border-l flex flex-col shrink-0 ${isRightPanelOpen ? 'translate-x-0' : 'translate-x-full'} ${darkMode ? 'bg-[#08080c] border-white/5' : 'bg-white border-slate-200'}`}>
         <div className="flex border-b border-white/5 items-center p-4">
           <button className="md:hidden text-slate-400 hover:text-white px-2 mr-2 border-r border-white/5" onClick={() => setIsRightPanelOpen(false)} aria-label="Close chat panel">✕</button>
           <span className="font-bold text-sm text-slate-200">Assistant & Data</span>
@@ -456,7 +456,7 @@ export default function Dashboard() {
             })()} />
           </div>
           {csvData ? (
-            <div className="h-64 overflow-y-auto p-4 bg-black/20">
+            <div className={`h-64 overflow-y-auto p-4 ${darkMode ? 'bg-black/20' : 'bg-slate-50'}`}>
               <p className="text-xs text-slate-400 mb-3 font-semibold tracking-wider uppercase">CSV Columns ({csvData.columns.length})</p>
               <div className="space-y-1.5">
                 {csvData.columns.map(col => (
@@ -468,7 +468,7 @@ export default function Dashboard() {
               </div>
             </div>
           ) : (
-            <div className="h-64 flex items-center justify-center bg-black/20">
+            <div className={`h-64 flex items-center justify-center ${darkMode ? 'bg-black/20' : 'bg-slate-50'}`}>
               <p className="text-[10px] text-slate-600 italic">No data uploaded</p>
             </div>
           )}

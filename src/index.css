@@ -9,19 +9,122 @@
   ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
 
-  /* Light mode overrides */
-  .light-mode body { background: #f0f2f5; color: #1e293b; }
+  /* ═══════════════════════════════════════════
+     LIGHT MODE — comprehensive overrides
+     ═══════════════════════════════════════════ */
+  .light-mode body,
+  .light-mode { background: #f4f6f9; color: #1e293b; }
+
+  /* Glass panels → white with subtle shadow */
   .light-mode .glass {
-    background: rgba(255, 255, 255, 0.85);
-    border-color: rgba(0,0,0,0.08);
+    background: rgba(255, 255, 255, 0.92) !important;
+    border-color: rgba(0,0,0,0.08) !important;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   }
   .light-mode .glass-hover:hover {
-    box-shadow: 0 0 25px rgba(99,102,241,0.2);
-    border-color: rgba(99,102,241,0.3);
+    box-shadow: 0 4px 20px rgba(99,102,241,0.15);
+    border-color: rgba(99,102,241,0.3) !important;
   }
-  .light-mode ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.4); }
+
+  /* Dark BGs → white/light gray */
+  .light-mode .bg-\[\#08080c\],
+  .light-mode .bg-\[\#0a0a0f\] { background: #f4f6f9 !important; }
+  .light-mode .bg-\[\#101018\] { background: #ffffff !important; }
+  .light-mode .bg-\[\#0f0f18\] { background: #f8f9fc !important; }
+  .light-mode .bg-\[\#13141f\] { background: #ffffff !important; }
+  .light-mode .bg-\[\#0c0d14\] { background: #f8fafc !important; }
+  .light-mode .bg-\[\#1a1b26\] { background: #ffffff !important; }
+
+  /* Gradient backgrounds → light */
+  .light-mode .from-\[\#13141f\] { --tw-gradient-from: #ffffff !important; }
+  .light-mode .to-\[\#0c0d14\] { --tw-gradient-to: #f1f5f9 !important; }
+  .light-mode .from-\[\#101018\] { --tw-gradient-from: #ffffff !important; }
+
+  /* Text colors → dark on light */
+  .light-mode .text-slate-200 { color: #1e293b !important; }
+  .light-mode .text-slate-300 { color: #334155 !important; }
+  .light-mode .text-slate-400 { color: #64748b !important; }
+  .light-mode .text-slate-500 { color: #94a3b8 !important; }
+  .light-mode .text-slate-600 { color: #94a3b8 !important; }
+  .light-mode .text-white { color: #0f172a !important; }
+
+  /* But keep white text inside buttons with glow-btn */
+  .light-mode .glow-btn .text-white,
+  .light-mode .glow-btn { color: #ffffff !important; }
+  .light-mode button.glow-btn { color: #ffffff !important; }
+
+  /* KPI gradient text → dark gradient */
+  .light-mode .from-white.to-slate-400,
+  .light-mode .bg-gradient-to-br.from-white { --tw-gradient-from: #0f172a !important; --tw-gradient-to: #475569 !important; }
+
+  /* Borders → subtle gray */
+  .light-mode .border-white\/5,
+  .light-mode .border-white\/10 { border-color: rgba(0,0,0,0.08) !important; }
+  .light-mode .border-white\/20 { border-color: rgba(0,0,0,0.12) !important; }
+
+  /* Input fields */
+  .light-mode input.bg-transparent,
+  .light-mode select { color: #1e293b !important; }
+  .light-mode input::placeholder { color: #94a3b8 !important; }
+
+  /* Code blocks */
+  .light-mode pre.bg-black\/40,
+  .light-mode .bg-black\/40 { background: #f1f5f9 !important; border-color: rgba(0,0,0,0.08) !important; }
+  .light-mode code { color: #6366f1 !important; }
+
+  /* Chart card bg */
+  .light-mode [class*="bg-[#101018]"] { background: #ffffff !important; border-color: rgba(0,0,0,0.06) !important; }
+
+  /* Filter bar */
+  .light-mode select.bg-\[\#1a1b26\] { background: #ffffff !important; border-color: rgba(0,0,0,0.12) !important; color: #334155 !important; }
+  .light-mode option { background: #ffffff !important; color: #334155 !important; }
+
+  /* Overlay */
+  .light-mode .bg-black\/70 { background: rgba(0,0,0,0.3) !important; }
+
+  /* Glow button — keep purple */
+  .light-mode .glow-btn {
+    box-shadow: 0 2px 12px rgba(99,102,241,0.3);
+  }
+  .light-mode .glow-btn:hover {
+    box-shadow: 0 4px 24px rgba(99,102,241,0.4);
+  }
+
+  /* AI Chat bubbles */
+  .light-mode [style*="rgba(255,255,255,0.05)"] { background: #f1f5f9 !important; border-color: rgba(0,0,0,0.08) !important; }
+  .light-mode [style*="rgba(99,102,241,0.2)"] { background: rgba(99,102,241,0.12) !important; }
+
+  /* Primary colors stay the same in light mode */
+  .light-mode .text-primary { color: #4f46e5 !important; }
+  .light-mode .text-secondary { color: #0891b2 !important; }
+  .light-mode .text-emerald-400 { color: #059669 !important; }
+  .light-mode .text-red-400 { color: #dc2626 !important; }
+  .light-mode .text-red-300 { color: #dc2626 !important; }
+
+  /* Scrollbar */
+  .light-mode ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); }
+
+  /* Right panel */
+  .light-mode .bg-\[\#0b0b12\] { background: #ffffff !important; }
+
+  /* Anomaly badges keep their colors */
+  .light-mode .bg-red-500\/10 { background: rgba(239,68,68,0.08) !important; }
+  .light-mode .bg-emerald-500\/10 { background: rgba(16,185,129,0.08) !important; }
+  .light-mode .bg-orange-500\/10 { background: rgba(249,115,22,0.08) !important; }
+
+  /* Primary background tints → lighter */
+  .light-mode .bg-primary\/10 { background: rgba(99,102,241,0.06) !important; }
+  .light-mode .bg-primary\/20 { background: rgba(99,102,241,0.1) !important; }
+  .light-mode .from-primary\/5 { --tw-gradient-from: rgba(99,102,241,0.03) !important; }
+  .light-mode .from-primary\/10 { --tw-gradient-from: rgba(99,102,241,0.05) !important; }
+  .light-mode .from-primary\/20 { --tw-gradient-from: rgba(99,102,241,0.08) !important; }
+
+  /* Shadow adjustments */
+  .light-mode .shadow-lg { box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important; }
+  .light-mode .shadow-xl { box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important; }
+  .light-mode .shadow-2xl { box-shadow: 0 8px 32px rgba(0,0,0,0.08) !important; }
 }
 
 @layer components {
