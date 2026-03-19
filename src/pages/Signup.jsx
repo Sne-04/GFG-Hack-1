@@ -21,7 +21,12 @@ export default function Signup() {
     setLoading(true)
     setError('')
     try {
-      await signUp(email, password, name)
+      const data = await signUp(email, password, name)
+      // If user session exists, email confirmation is disabled — go straight to dashboard
+      if (data?.session) {
+        navigate('/dashboard')
+        return
+      }
       setSuccess(true)
     } catch (err) {
       setError(err.message || 'Signup failed. Please try again.')
