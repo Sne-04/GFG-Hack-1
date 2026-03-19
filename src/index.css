@@ -4,10 +4,24 @@
 
 @layer base {
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #08080c; color: #f1f5f9; font-family: 'Inter', sans-serif; }
+  body { background: #08080c; color: #f1f5f9; font-family: 'Inter', sans-serif; transition: background 0.3s, color 0.3s; }
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
+
+  /* Light mode overrides */
+  .light-mode body { background: #f0f2f5; color: #1e293b; }
+  .light-mode .glass {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: rgba(0,0,0,0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .light-mode .glass-hover:hover {
+    box-shadow: 0 0 25px rgba(99,102,241,0.2);
+    border-color: rgba(99,102,241,0.3);
+  }
+  .light-mode ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.4); }
 }
 
 @layer components {
