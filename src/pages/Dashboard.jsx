@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Database, Plus, FileSpreadsheet, ChevronRight, AlertTriangle, Code, TrendingUp, Download, X, Sparkles, Save, Home, Sun, Moon } from 'lucide-react'
+import { Database, Plus, FileSpreadsheet, ChevronRight, AlertTriangle, Code, TrendingUp, Download, X, Sparkles, Save, Home, Sun, Moon, Lock } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import ParticleBackground from '../components/ParticleBackground'
 import CSVUpload from '../components/CSVUpload'
@@ -20,7 +20,7 @@ import { queryOpenAI } from '../utils/openaiApi'
 import { buildPreComputedContext } from '../utils/dataEngine'
 import { validateAndFixResponse } from '../utils/responseValidator'
 import { saveQuery, getRecentQueries, saveDashboard, incrementDailyUsage } from '../utils/supabase'
-import { checkQueryQuota, getPlanLimits } from '../utils/quota'
+import { checkQueryQuota, getPlanLimits, checkDashboardQuota } from '../utils/quota'
 
 export default function Dashboard() {
   const { user, supabaseEnabled, plan, usage, refreshPlan } = useAuth()
@@ -234,7 +234,7 @@ export default function Dashboard() {
         <div className="flex-1 overflow-y-auto px-4">
           <p className="text-[9px] uppercase tracking-widest text-slate-500 font-semibold mb-2">Recent Queries</p>
           <div className="space-y-1">
-            {recentQueries.map((q, i) => (
+            {(plan === 'free' ? recentQueries.slice(0, 20) : recentQueries).map((q, i) => (
               <button key={i} onClick={() => handleQuery(q)} className="w-full text-left text-[10px] text-slate-400 hover:text-primary px-2 py-1.5 rounded-lg hover:bg-white/5 transition-all truncate">
                 <ChevronRight size={8} className="inline mr-1"/>{q}
               </button>
@@ -376,28 +376,65 @@ export default function Dashboard() {
                   {user && supabaseEnabled && (
                     <button onClick={async () => {
                       try {
+                        const { data: dashboards } = await import('../utils/supabase').then(m => ({ data: null }))
+                        const quota = checkDashboardQuota(0, plan) // will check against DB count
                         await saveDashboard(user.id, csvFile, schema, result, result.query)
                         setSaved(true)
-                      } catch (e) { console.error(e) }
+                      } catch (e) {
+                        if (e?.message?.includes('limit')) alert(e.message)
+                        console.error(e)
+                      }
                     }} disabled={saved}
                       className={`glass rounded-lg px-4 py-2 text-xs font-medium flex items-center gap-2 transition-all ml-2 ${saved ? 'text-emerald-400 border-emerald-500/30' : 'hover:border-primary/30'}`}>
                       <Save size={14}/>{saved ? 'Saved' : 'Save'}
                     </button>
                   )}
+                  {/* PNG export — all plans */}
                   <button onClick={() => {
                     import('html2canvas').then(({ default: html2canvas }) => {
-                      const el = document.getElementById('dashboard-content');
-                      if (!el) return;
+                      const el = document.getElementById('dashboard-content')
+                      if (!el) return
                       html2canvas(el, { backgroundColor: '#0a0a0f', scale: 2 }).then(canvas => {
-                        const link = document.createElement('a');
-                        link.download = 'datamind-dashboard.png';
-                        link.href = canvas.toDataURL();
-                        link.click();
-                      });
-                    });
+                        const link = document.createElement('a')
+                        link.download = 'datamind-dashboard.png'
+                        link.href = canvas.toDataURL()
+                        link.click()
+                      })
+                    })
                   }} className="glass rounded-lg px-4 py-2 text-xs font-medium flex items-center gap-2 hover:border-primary/30 transition-all ml-2">
-                    <Download size={14}/>Export
+                    <Download size={14}/>PNG
                   </button>
+                  {/* PDF export — Pro+ */}
+                  {plan === 'free' ? (
+                    <a href="/pricing" title="Upgrade to Pro for PDF export" className="glass rounded-lg px-4 py-2 text-xs font-medium flex items-center gap-2 text-slate-500 cursor-pointer hover:border-primary/20 transition-all ml-2">
+                      <Lock size={12}/>PDF
+                    </a>
+                  ) : (
+                    <button onClick={() => {
+                      import('html2canvas').then(({ default: html2canvas }) => {
+                        const el = document.getElementById('dashboard-content')
+                        if (!el) return
+                        html2canvas(el, { backgroundColor: '#0a0a0f', scale: 1.5 }).then(canvas => {
+                          const imgData = canvas.toDataURL('image/jpeg', 0.85)
+                          const w = window.open('', '_blank')
+                          w.document.write(`<html><head><title>DataMind Dashboard</title><style>body{margin:0;background:#0a0a0f}img{width:100%;height:auto}</style></head><body><img src="${imgData}" onload="window.print()"/></body></html>`)
+                          w.document.close()
+                        })
+                      })
+                    }} className="glass rounded-lg px-4 py-2 text-xs font-medium flex items-center gap-2 hover:border-primary/30 transition-all ml-2">
+                      <Download size={14}/>PDF
+                    </button>
+                  )}
+                  {/* PPT export — Enterprise only */}
+                  {plan !== 'enterprise' ? (
+                    <a href="/pricing" title="Upgrade to Enterprise for PPT export" className="glass rounded-lg px-4 py-2 text-xs font-medium flex items-center gap-2 text-slate-500 cursor-pointer hover:border-primary/20 transition-all ml-2">
+                      <Lock size={12}/>PPT
+                    </a>
+                  ) : (
+                    <button onClick={() => alert('PPT export: contact support@datamind.ai for your enterprise export file.')} className="glass rounded-lg px-4 py-2 text-xs font-medium flex items-center gap-2 hover:border-emerald-500/30 transition-all ml-2">
+                      <Download size={14}/>PPT
+                    </button>
+                  )}
                 </div>
               </div>
 

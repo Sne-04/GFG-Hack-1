@@ -52,6 +52,10 @@ export default function CSVUpload({ onUpload, compact = false }) {
       <Upload size={40} className="mx-auto mb-3 text-slate-500 group-hover:text-primary transition-colors animate-float"/>
       <h3 className="text-sm font-medium text-slate-300 mb-1">Drop your CSV file here</h3>
       <span className="text-xs text-slate-500">or click to browse</span>
+      <p className="text-[10px] text-slate-600 mt-2">
+        Max size: {plan === 'enterprise' ? '500MB' : plan === 'pro' ? '100MB' : '10MB'}
+        {plan === 'free' && <a href="/pricing" className="text-primary ml-1 hover:underline">Upgrade for larger files →</a>}
+      </p>
       <input type="file" accept=".csv" className="hidden" onChange={e => handleFile(e.target.files?.[0])}/>
     </label>
   )
