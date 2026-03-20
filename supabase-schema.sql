@@ -65,11 +65,11 @@ create policy "Users can insert own dashboards" on dashboards for insert with ch
 create policy "Users can update own dashboards" on dashboards for update using (auth.uid() = user_id);
 create policy "Users can delete own dashboards" on dashboards for delete using (auth.uid() = user_id);
 
--- API usage tracking
+-- API usage tracking (daily)
 create table if not exists api_usage (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete cascade not null,
-  month text not null, -- e.g. '2026-03'
+  month text not null, -- e.g. '2026-03-19' (daily tracking)
   query_count int default 0,
   tokens_consumed int default 0,
   created_at timestamptz default now(),
@@ -80,3 +80,13 @@ alter table api_usage enable row level security;
 create policy "Users can view own usage" on api_usage for select using (auth.uid() = user_id);
 create policy "Users can upsert own usage" on api_usage for insert with check (auth.uid() = user_id);
 create policy "Users can update own usage" on api_usage for update using (auth.uid() = user_id);
+
+-- ── Phase 4: Add plan columns to profiles ──
+-- Run these ALTER statements if the profiles table already exists:
+--
+-- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS plan text DEFAULT 'free';
+-- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS billing_period text;
+-- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS razorpay_payment_id text;
+-- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS razorpay_order_id text;
+-- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS plan_expires_at timestamptz;
+-- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS phone text;

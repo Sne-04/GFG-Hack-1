@@ -1,9 +1,11 @@
 import { useCallback } from 'react'
 import { Upload, FileSpreadsheet } from 'lucide-react'
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+import { useAuth } from '../contexts/AuthContext'
+import { checkFileSizeQuota } from '../utils/quota'
 
 export default function CSVUpload({ onUpload, compact = false }) {
+  const { plan } = useAuth()
+
   const handleFile = useCallback((file) => {
     if (!file) return
     const ext = file.name.split('.').pop().toLowerCase()
@@ -11,12 +13,14 @@ export default function CSVUpload({ onUpload, compact = false }) {
       alert('Please upload a .csv file')
       return
     }
-    if (file.size > MAX_FILE_SIZE) {
-      alert('File too large. Please upload a file under 10MB.')
+    const fileSizeMB = file.size / (1024 * 1024)
+    const sizeCheck = checkFileSizeQuota(fileSizeMB, plan || 'free')
+    if (!sizeCheck.allowed) {
+      alert(sizeCheck.reason)
       return
     }
     onUpload(file)
-  }, [onUpload])
+  }, [onUpload, plan])
 
   const onDrop = useCallback((e) => {
     e.preventDefault()

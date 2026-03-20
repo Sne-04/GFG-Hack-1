@@ -19,10 +19,11 @@ import { parseCSV, getSchema, getSampleRows, getCategoricalColumns } from '../ut
 import { queryOpenAI } from '../utils/openaiApi'
 import { buildPreComputedContext } from '../utils/dataEngine'
 import { validateAndFixResponse } from '../utils/responseValidator'
-import { saveQuery, getRecentQueries, saveDashboard } from '../utils/supabase'
+import { saveQuery, getRecentQueries, saveDashboard, incrementDailyUsage } from '../utils/supabase'
+import { checkQueryQuota, getPlanLimits } from '../utils/quota'
 
 export default function Dashboard() {
-  const { user, supabaseEnabled } = useAuth()
+  const { user, supabaseEnabled, plan, usage, refreshPlan } = useAuth()
   const [csvData, setCsvData] = useState(null)
   const [csvFile, setCsvFile] = useState(null)
   const [schema, setSchema] = useState(null)
@@ -102,6 +103,16 @@ export default function Dashboard() {
 
   const handleQuery = useCallback(async (query, overrideFilters = null) => {
     if (!csvData) { setError('Please upload a CSV file first'); return }
+
+    // Check quota before querying
+    if (user && supabaseEnabled) {
+      const quota = checkQueryQuota(usage, plan)
+      if (!quota.allowed) {
+        setError(quota.reason)
+        return
+      }
+    }
+
     setLoading(true)
     setError(null)
     setResult(null)
@@ -124,9 +135,10 @@ export default function Dashboard() {
         const validated = validateAndFixResponse(res, preComputed, csvData.columns)
         setResult({ ...validated, query })
         setSaved(false)
-        // Save query to DB if authenticated
+        // Save query to DB and track usage if authenticated
         if (user && supabaseEnabled) {
           saveQuery(user.id, query, validated, csvFile).catch(() => {})
+          incrementDailyUsage(user.id).then(() => refreshPlan(user.id)).catch(() => {})
         }
       }
     } catch (e) {
@@ -135,7 +147,7 @@ export default function Dashboard() {
     setLoading(false)
     // Auto-scroll to results
     setTimeout(() => outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300)
-  }, [csvData, schema, activeFilters, user, supabaseEnabled, csvFile])
+  }, [csvData, schema, activeFilters, user, supabaseEnabled, csvFile, plan, usage, refreshPlan])
 
   const handleFilterChange = useCallback((col, val) => {
     setActiveFilters(p => {
@@ -176,6 +188,42 @@ export default function Dashboard() {
             <Plus size={14}/>New Dashboard
           </button>
         </div>
+
+        {/* Quota badge */}
+        {user && supabaseEnabled && (() => {
+          const limits = getPlanLimits(plan)
+          const used = usage?.today_count || 0
+          const limit = limits.queriesPerDay
+          const isUnlimited = limit === -1
+          return (
+            <div className="px-4 mb-2">
+              <div className="glass rounded-lg p-2.5 border border-white/5">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[9px] uppercase tracking-wider text-slate-500 font-semibold">Today's Queries</span>
+                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${plan === 'free' ? 'bg-slate-500/15 text-slate-400' : plan === 'pro' ? 'bg-primary/15 text-primary' : 'bg-emerald-500/15 text-emerald-400'}`}>
+                    {plan === 'free' ? 'FREE' : plan.toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${isUnlimited || used / limit < 0.8 ? 'bg-primary' : used / limit < 1 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                      style={{ width: isUnlimited ? '15%' : `${Math.min(100, (used / limit) * 100)}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-medium tabular-nums">
+                    {isUnlimited ? `${used} used` : `${used}/${limit}`}
+                  </span>
+                </div>
+                {!isUnlimited && used >= limit && (
+                  <button onClick={() => window.location.href = '/pricing'} className="w-full mt-2 text-[9px] text-primary hover:text-primary/80 font-medium transition-colors">
+                    ↑ Upgrade for more queries
+                  </button>
+                )}
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Recent Queries */}
         <div className="flex-1 overflow-y-auto px-4">

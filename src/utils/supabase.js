@@ -167,3 +167,49 @@ export async function toggleFavorite(dashboardId, isFavorite) {
   if (error) console.error('Failed to toggle favorite:', error)
   return data
 }
+
+// ── Usage tracking helpers ──
+
+export async function incrementDailyUsage(userId) {
+  if (!supabase) return null
+  const today = new Date().toISOString().split('T')[0]
+
+  // Try to upsert — increment if exists, insert if not
+  const { data: existing } = await supabase
+    .from('api_usage')
+    .select('id, query_count')
+    .eq('user_id', userId)
+    .eq('month', today)
+    .single()
+
+  if (existing) {
+    const { data, error } = await supabase
+      .from('api_usage')
+      .update({ query_count: existing.query_count + 1 })
+      .eq('id', existing.id)
+      .select()
+      .single()
+    if (error) console.error('Failed to update usage:', error)
+    return data
+  } else {
+    const { data, error } = await supabase
+      .from('api_usage')
+      .insert({ user_id: userId, month: today, query_count: 1 })
+      .select()
+      .single()
+    if (error) console.error('Failed to insert usage:', error)
+    return data
+  }
+}
+
+export async function getDailyUsage(userId) {
+  if (!supabase) return 0
+  const today = new Date().toISOString().split('T')[0]
+  const { data } = await supabase
+    .from('api_usage')
+    .select('query_count')
+    .eq('user_id', userId)
+    .eq('month', today)
+    .single()
+  return data?.query_count || 0
+}
