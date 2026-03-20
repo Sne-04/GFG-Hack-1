@@ -168,6 +168,72 @@ export async function toggleFavorite(dashboardId, isFavorite) {
   return data
 }
 
+export async function deleteDashboard(dashboardId) {
+  if (!supabase) return null
+  const { error } = await supabase
+    .from('dashboards')
+    .delete()
+    .eq('id', dashboardId)
+  if (error) console.error('Failed to delete dashboard:', error)
+  return !error
+}
+
+export async function renameDashboard(dashboardId, title) {
+  if (!supabase) return null
+  const { data, error } = await supabase
+    .from('dashboards')
+    .update({ title })
+    .eq('id', dashboardId)
+    .select()
+    .single()
+  if (error) console.error('Failed to rename dashboard:', error)
+  return data
+}
+
+export async function generateShareToken(dashboardId) {
+  if (!supabase) return null
+  // Generate a UUID-style token using crypto.randomUUID if available
+  const token = typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : Math.random().toString(36).slice(2) + Date.now().toString(36)
+  const { data, error } = await supabase
+    .from('dashboards')
+    .update({ share_token: token })
+    .eq('id', dashboardId)
+    .select('share_token')
+    .single()
+  if (error) console.error('Failed to generate share token:', error)
+  return data?.share_token || null
+}
+
+export async function getDashboardByToken(token) {
+  if (!supabase) return null
+  const { data } = await supabase
+    .from('dashboards')
+    .select('*')
+    .eq('share_token', token)
+    .single()
+  return data
+}
+
+// ── Plan activation (client-side, uses user's own session) ──
+
+export async function activatePlanClient(userId, plan, billing) {
+  if (!supabase) return null
+  const now = new Date()
+  const expiresAt = new Date(now)
+  if (billing === 'yearly') {
+    expiresAt.setFullYear(expiresAt.getFullYear() + 1)
+  } else {
+    expiresAt.setMonth(expiresAt.getMonth() + 1)
+  }
+  return upsertProfile(userId, {
+    plan,
+    billing_period: billing,
+    plan_expires_at: expiresAt.toISOString(),
+  })
+}
+
 // ── Usage tracking helpers ──
 
 export async function incrementDailyUsage(userId) {

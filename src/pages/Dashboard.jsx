@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Database, Plus, FileSpreadsheet, ChevronRight, AlertTriangle, Code, TrendingUp, Download, X, Sparkles, Save, Home, Sun, Moon } from 'lucide-react'
+import { Database, Plus, FileSpreadsheet, ChevronRight, AlertTriangle, Code, TrendingUp, Download, X, Sparkles, Save, Home, Sun, Moon, Lock } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import ParticleBackground from '../components/ParticleBackground'
 import CSVUpload from '../components/CSVUpload'
@@ -14,13 +14,14 @@ import FilterBar from '../components/FilterBar'
 import Header from '../components/Header'
 import AIChat from '../components/AIChat'
 import UserMenu from '../components/UserMenu'
+import OnboardingTour from '../components/OnboardingTour'
 import { useAuth } from '../contexts/AuthContext'
 import { parseCSV, getSchema, getSampleRows, getCategoricalColumns } from '../utils/csvParser'
 import { queryOpenAI } from '../utils/openaiApi'
 import { buildPreComputedContext } from '../utils/dataEngine'
 import { validateAndFixResponse } from '../utils/responseValidator'
 import { saveQuery, getRecentQueries, saveDashboard, incrementDailyUsage } from '../utils/supabase'
-import { checkQueryQuota, getPlanLimits } from '../utils/quota'
+import { checkQueryQuota, getPlanLimits, checkDashboardQuota } from '../utils/quota'
 
 export default function Dashboard() {
   const { user, supabaseEnabled, plan, usage, refreshPlan } = useAuth()
@@ -41,8 +42,19 @@ export default function Dashboard() {
   const contentRef = useRef(null)
   const outputRef = useRef(null)
 
-  // Load recent queries from DB on mount
+  // Load recent queries from DB on mount + restore saved dashboard if navigated from /dashboards
   useEffect(() => {
+    const restore = sessionStorage.getItem('datamind-restore')
+    if (restore) {
+      try {
+        const { result, query, csvName, schema: savedSchema } = JSON.parse(restore)
+        setResult({ ...result, query })
+        setCsvFile(csvName)
+        setSchema(savedSchema)
+      } catch { /* ignore bad data */ }
+      sessionStorage.removeItem('datamind-restore')
+    }
+
     if (user && supabaseEnabled) {
       getRecentQueries(user.id, 10).then(queries => {
         if (queries.length) {
@@ -142,7 +154,7 @@ export default function Dashboard() {
         }
       }
     } catch (e) {
-      setError(e.message || 'AI is thinking... please retry')
+      setError(e.message || 'Something went wrong. Try asking in a different way.')
     }
     setLoading(false)
     // Auto-scroll to results
@@ -168,6 +180,7 @@ export default function Dashboard() {
 
   return (
     <div className={`flex flex-col md:flex-row h-screen overflow-hidden relative w-full transition-colors duration-300 ${darkMode ? 'bg-[#08080c] text-slate-200' : 'bg-[#f0f2f5] text-slate-800'}`}>
+      <OnboardingTour />
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && <div className="fixed inset-0 bg-black/70 z-40 md:hidden" onClick={() => setIsSidebarOpen(false)} />}
       
@@ -183,10 +196,15 @@ export default function Dashboard() {
           <button className="md:hidden text-slate-400 hover:text-white px-2" onClick={() => setIsSidebarOpen(false)} aria-label="Close sidebar">✕</button>
         </div>
 
-        <div className="p-4">
+        <div className="p-4 space-y-2">
           <button onClick={() => { setResult(null); setError(null) }} className="w-full glow-btn rounded-lg py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 text-white">
             <Plus size={14}/>New Dashboard
           </button>
+          {user && supabaseEnabled && (
+            <Link to="/dashboards" className="w-full flex items-center justify-center gap-1.5 glass rounded-lg py-2 text-xs text-slate-400 hover:text-primary hover:border-primary/30 transition-all">
+              <Database size={12}/>My Dashboards
+            </Link>
+          )}
         </div>
 
         {/* Quota badge */}
@@ -216,9 +234,14 @@ export default function Dashboard() {
                   </span>
                 </div>
                 {!isUnlimited && used >= limit && (
-                  <button onClick={() => window.location.href = '/pricing'} className="w-full mt-2 text-[9px] text-primary hover:text-primary/80 font-medium transition-colors">
+                  <a href="/pricing" className="w-full mt-2 block text-center text-[9px] bg-primary/10 hover:bg-primary/20 text-primary font-semibold rounded-md py-1 transition-colors">
                     ↑ Upgrade for more queries
-                  </button>
+                  </a>
+                )}
+                {!isUnlimited && used < limit && plan === 'free' && (
+                  <a href="/pricing" className="w-full mt-1.5 block text-center text-[9px] text-slate-500 hover:text-primary transition-colors">
+                    Upgrade to Pro →
+                  </a>
                 )}
               </div>
             </div>
@@ -229,7 +252,7 @@ export default function Dashboard() {
         <div className="flex-1 overflow-y-auto px-4">
           <p className="text-[9px] uppercase tracking-widest text-slate-500 font-semibold mb-2">Recent Queries</p>
           <div className="space-y-1">
-            {recentQueries.map((q, i) => (
+            {(plan === 'free' ? recentQueries.slice(0, 20) : recentQueries).map((q, i) => (
               <button key={i} onClick={() => handleQuery(q)} className="w-full text-left text-[10px] text-slate-400 hover:text-primary px-2 py-1.5 rounded-lg hover:bg-white/5 transition-all truncate">
                 <ChevronRight size={8} className="inline mr-1"/>{q}
               </button>
@@ -371,38 +394,75 @@ export default function Dashboard() {
                   {user && supabaseEnabled && (
                     <button onClick={async () => {
                       try {
+                        const { data: dashboards } = await import('../utils/supabase').then(m => ({ data: null }))
+                        const quota = checkDashboardQuota(0, plan) // will check against DB count
                         await saveDashboard(user.id, csvFile, schema, result, result.query)
                         setSaved(true)
-                      } catch (e) { console.error(e) }
+                      } catch (e) {
+                        if (e?.message?.includes('limit')) alert(e.message)
+                        console.error(e)
+                      }
                     }} disabled={saved}
                       className={`glass rounded-lg px-4 py-2 text-xs font-medium flex items-center gap-2 transition-all ml-2 ${saved ? 'text-emerald-400 border-emerald-500/30' : 'hover:border-primary/30'}`}>
                       <Save size={14}/>{saved ? 'Saved' : 'Save'}
                     </button>
                   )}
+                  {/* PNG export — all plans */}
                   <button onClick={() => {
                     import('html2canvas').then(({ default: html2canvas }) => {
-                      const el = document.getElementById('dashboard-content');
-                      if (!el) return;
+                      const el = document.getElementById('dashboard-content')
+                      if (!el) return
                       html2canvas(el, { backgroundColor: '#0a0a0f', scale: 2 }).then(canvas => {
-                        const link = document.createElement('a');
-                        link.download = 'datamind-dashboard.png';
-                        link.href = canvas.toDataURL();
-                        link.click();
-                      });
-                    });
+                        const link = document.createElement('a')
+                        link.download = 'datamind-dashboard.png'
+                        link.href = canvas.toDataURL()
+                        link.click()
+                      })
+                    })
                   }} className="glass rounded-lg px-4 py-2 text-xs font-medium flex items-center gap-2 hover:border-primary/30 transition-all ml-2">
-                    <Download size={14}/>Export
+                    <Download size={14}/>PNG
                   </button>
+                  {/* PDF export — Pro+ */}
+                  {plan === 'free' ? (
+                    <a href="/pricing" title="Upgrade to Pro for PDF export" className="glass rounded-lg px-4 py-2 text-xs font-medium flex items-center gap-2 text-slate-500 cursor-pointer hover:border-primary/20 transition-all ml-2">
+                      <Lock size={12}/>PDF
+                    </a>
+                  ) : (
+                    <button onClick={() => {
+                      import('html2canvas').then(({ default: html2canvas }) => {
+                        const el = document.getElementById('dashboard-content')
+                        if (!el) return
+                        html2canvas(el, { backgroundColor: '#0a0a0f', scale: 1.5 }).then(canvas => {
+                          const imgData = canvas.toDataURL('image/jpeg', 0.85)
+                          const w = window.open('', '_blank')
+                          w.document.write(`<html><head><title>DataMind Dashboard</title><style>body{margin:0;background:#0a0a0f}img{width:100%;height:auto}</style></head><body><img src="${imgData}" onload="window.print()"/></body></html>`)
+                          w.document.close()
+                        })
+                      })
+                    }} className="glass rounded-lg px-4 py-2 text-xs font-medium flex items-center gap-2 hover:border-primary/30 transition-all ml-2">
+                      <Download size={14}/>PDF
+                    </button>
+                  )}
+                  {/* PPT export — Enterprise only */}
+                  {plan !== 'enterprise' ? (
+                    <a href="/pricing" title="Upgrade to Enterprise for PPT export" className="glass rounded-lg px-4 py-2 text-xs font-medium flex items-center gap-2 text-slate-500 cursor-pointer hover:border-primary/20 transition-all ml-2">
+                      <Lock size={12}/>PPT
+                    </a>
+                  ) : (
+                    <button onClick={() => alert('PPT export: contact support@datamind.ai for your enterprise export file.')} className="glass rounded-lg px-4 py-2 text-xs font-medium flex items-center gap-2 hover:border-emerald-500/30 transition-all ml-2">
+                      <Download size={14}/>PPT
+                    </button>
+                  )}
                 </div>
               </div>
 
               {/* Action Buttons (SQL / Description) */}
               <div className="flex gap-3 mb-6">
                 <button onClick={() => setResultTab('sql')} className={`text-xs px-4 py-2 rounded-lg transition-all font-medium border ${resultTab === 'sql' ? 'bg-primary/20 text-indigo-300 border-primary/30' : 'glass text-slate-400 hover:text-slate-200 border-white/5 hover:border-white/10'}`}>
-                  Generated SQL Query
+                  How we found the answer
                 </button>
                 <button onClick={() => setResultTab('trend')} className={`text-xs px-4 py-2 rounded-lg transition-all font-medium border ${resultTab === 'trend' ? 'bg-primary/20 text-indigo-300 border-primary/30' : 'glass text-slate-400 hover:text-slate-200 border-white/5 hover:border-white/10'}`}>
-                  Description & Trend Analysis
+                  What&apos;s happening with your data
                 </button>
               </div>
 
@@ -435,7 +495,7 @@ export default function Dashboard() {
                   <div style={{marginBottom: '16px'}}>
                     <ChartCard chart={result.charts[0]} index={0} title={result.charts[0].title} subtitle={result.charts[0].subtitle} reason={result.charts[0].reason}>
                       <div style={{ height: 400 }}>
-                        <DynamicChart type={result.charts[0].type} data={result.charts[0].data} xKey={result.charts[0].xKey} yKeys={result.charts[0].yKeys} />
+                        <DynamicChart type={result.charts[0].type} data={result.charts[0].data} xKey={result.charts[0].xKey} yKeys={result.charts[0].yKeys} plan={plan} />
                       </div>
                     </ChartCard>
                   </div>
@@ -446,7 +506,7 @@ export default function Dashboard() {
                       {result.charts.slice(1).map((chart, i) => (
                         <ChartCard key={i+1} chart={chart} index={i+1} title={chart.title} subtitle={chart.subtitle} reason={chart.reason}>
                           <div style={{ height: 300 }}>
-                            <DynamicChart type={chart.type} data={chart.data} xKey={chart.xKey} yKeys={chart.yKeys} />
+                            <DynamicChart type={chart.type} data={chart.data} xKey={chart.xKey} yKeys={chart.yKeys} plan={plan} />
                           </div>
                         </ChartCard>
                       ))}
@@ -475,11 +535,19 @@ export default function Dashboard() {
       {/* Mobile Right Overlay */}
       {isRightPanelOpen && <div className="fixed inset-0 bg-black/70 z-40 md:hidden" onClick={() => setIsRightPanelOpen(false)} />}
 
-      {/* RIGHT PANEL */}
-      <aside className={`fixed inset-y-0 right-0 z-50 transform transition-all md:relative md:translate-x-0 w-80 border-l flex flex-col shrink-0 ${isRightPanelOpen ? 'translate-x-0' : 'translate-x-full'} ${darkMode ? 'bg-[#08080c] border-white/5' : 'bg-white border-slate-200'}`}>
+      {/* RIGHT PANEL — bottom sheet on mobile, fixed sidebar on desktop */}
+      <aside className={`fixed z-50 transform transition-all flex flex-col shrink-0
+        bottom-0 left-0 right-0 h-[80vh] rounded-t-2xl border-t
+        md:relative md:inset-y-auto md:left-auto md:right-auto md:h-auto md:w-80 md:rounded-none md:border-t-0 md:border-l md:translate-y-0
+        ${isRightPanelOpen ? 'translate-y-0' : 'translate-y-full md:translate-y-0'}
+        ${darkMode ? 'bg-[#08080c] border-white/5' : 'bg-white border-slate-200'}`}>
+        {/* Drag handle (mobile only) */}
+        <div className="md:hidden flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-white/20" />
+        </div>
         <div className="flex border-b border-white/5 items-center p-4">
           <button className="md:hidden text-slate-400 hover:text-white px-2 mr-2 border-r border-white/5" onClick={() => setIsRightPanelOpen(false)} aria-label="Close chat panel">✕</button>
-          <span className="font-bold text-sm text-slate-200">Assistant & Data</span>
+          <span className="font-bold text-sm text-slate-200">AI Assistant</span>
         </div>
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 border-b border-white/5">

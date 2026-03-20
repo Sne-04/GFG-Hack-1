@@ -4,9 +4,10 @@ import { motion } from 'framer-motion'
 import { Check, X, Zap, Crown, Building2, ArrowRight, Database, Sparkles, Tag, Loader2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { PLANS, formatPrice } from '../utils/quota'
+import { activatePlanClient } from '../utils/supabase'
 
 export default function Pricing() {
-  const { user } = useAuth()
+  const { user, refreshPlan } = useAuth()
   const navigate = useNavigate()
   const [billing, setBilling] = useState('monthly')
   const [loading, setLoading] = useState(null)
@@ -74,7 +75,10 @@ export default function Pricing() {
         })
         const verifyData = await verifyRes.json()
         if (verifyData.success) {
-          navigate('/settings?tab=billing&upgraded=true')
+          // Save plan directly to Supabase using user's session
+          await activatePlanClient(user.id, planId, billing).catch(() => {})
+          await refreshPlan(user.id)
+          navigate('/dashboard?upgraded=true')
         } else {
           alert('Activation failed. Please try again.')
         }
@@ -405,8 +409,8 @@ export default function Pricing() {
                   ['AI chat messages', '20/month', '200/month', 'Unlimited'],
                   ['Chart types', 'Basic 4', 'All + Heatmap', 'All + Custom'],
                   ['Export formats', 'PNG', 'PNG, PDF', 'PNG, PDF, PPT'],
-                  ['Team collaboration', <X size={12} className="text-red-400 mx-auto" />, <X size={12} className="text-red-400 mx-auto" />, <Check size={12} className="text-emerald-400 mx-auto" />],
-                  ['API access', <X size={12} className="text-red-400 mx-auto" />, <X size={12} className="text-red-400 mx-auto" />, <Check size={12} className="text-emerald-400 mx-auto" />],
+                  ['Team collaboration', <X key="tc-f" size={12} className="text-red-400 mx-auto" />, <X key="tc-p" size={12} className="text-red-400 mx-auto" />, <Check key="tc-e" size={12} className="text-emerald-400 mx-auto" />],
+                  ['API access', <X key="api-f" size={12} className="text-red-400 mx-auto" />, <X key="api-p" size={12} className="text-red-400 mx-auto" />, <Check key="api-e" size={12} className="text-emerald-400 mx-auto" />],
                   ['Support', 'Community', 'Email', 'Priority'],
                 ].map(([feature, free, pro, enterprise], i) => (
                   <tr key={i} className="border-b border-white/5 last:border-0">
