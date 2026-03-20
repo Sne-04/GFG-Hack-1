@@ -409,8 +409,8 @@ export default function Pricing() {
                   ['AI chat messages', '20/month', '200/month', 'Unlimited'],
                   ['Chart types', 'Basic 4', 'All + Heatmap', 'All + Custom'],
                   ['Export formats', 'PNG', 'PNG, PDF', 'PNG, PDF, PPT'],
-                  ['Team collaboration', <X size={12} className="text-red-400 mx-auto" />, <X size={12} className="text-red-400 mx-auto" />, <Check size={12} className="text-emerald-400 mx-auto" />],
-                  ['API access', <X size={12} className="text-red-400 mx-auto" />, <X size={12} className="text-red-400 mx-auto" />, <Check size={12} className="text-emerald-400 mx-auto" />],
+                  ['Team collaboration', <X key="tc-f" size={12} className="text-red-400 mx-auto" />, <X key="tc-p" size={12} className="text-red-400 mx-auto" />, <Check key="tc-e" size={12} className="text-emerald-400 mx-auto" />],
+                  ['API access', <X key="api-f" size={12} className="text-red-400 mx-auto" />, <X key="api-p" size={12} className="text-red-400 mx-auto" />, <Check key="api-e" size={12} className="text-emerald-400 mx-auto" />],
                   ['Support', 'Community', 'Email', 'Priority'],
                 ].map(([feature, free, pro, enterprise], i) => (
                   <tr key={i} className="border-b border-white/5 last:border-0">

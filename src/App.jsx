@@ -12,6 +12,8 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 const Settings = lazy(() => import('./pages/Settings'))
 const Pricing = lazy(() => import('./pages/Pricing'))
+const Dashboards = lazy(() => import('./pages/Dashboards'))
+const SharedDashboard = lazy(() => import('./pages/SharedDashboard'))
 
 function LoadingFallback() {
   return (
@@ -38,7 +40,7 @@ export default function App() {
     <AuthProvider>
       <Suspense fallback={<LoadingFallback />}>
         <AnimatePresence mode="wait">
-          <Routes location={location} key={location.pathname}>
+          <Routes key={location.pathname}>
             <Route path="/" element={<AnimatedRoute><LandingPage /></AnimatedRoute>} />
             <Route path="/login" element={<AnimatedRoute><Login /></AnimatedRoute>} />
             <Route path="/signup" element={<AnimatedRoute><Signup /></AnimatedRoute>} />
@@ -55,6 +57,12 @@ export default function App() {
                 <AuthGuard><Dashboard /></AuthGuard>
               </AnimatedRoute>
             } />
+            <Route path="/dashboards" element={
+              <AnimatedRoute>
+                <AuthGuard><Dashboards /></AuthGuard>
+              </AnimatedRoute>
+            } />
+            <Route path="/shared/:token" element={<AnimatedRoute><SharedDashboard /></AnimatedRoute>} />
           </Routes>
         </AnimatePresence>
       </Suspense>

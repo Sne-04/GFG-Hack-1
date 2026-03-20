@@ -4,7 +4,10 @@ import { TrendingUp, TrendingDown } from 'lucide-react'
 
 export default function KPICard({ label, value, unit, trend, trendDirection, delay = 0 }) {
   const count = useMotionValue(0)
-  const numVal = typeof value === 'number' ? value : parseFloat(String(value).replace(/[^0-9.\-]/g, '')) || 0
+  const strVal = String(value ?? '')
+  const parsed = parseFloat(strVal.replace(/[^0-9.-]/g, ''))
+  const isNumeric = !isNaN(parsed) && strVal.replace(/[^0-9.-]/g, '').length > 0
+  const numVal = isNumeric ? parsed : 0
   const display = useTransform(count, v => {
     if (unit === '$') return '$' + Math.round(v).toLocaleString()
     if (unit === '%') return Math.round(v) + '%'
@@ -12,14 +15,17 @@ export default function KPICard({ label, value, unit, trend, trendDirection, del
   })
 
   useEffect(() => {
+    if (!isNumeric) return
     const ctrl = animate(count, numVal, { duration: 1.5, delay: delay * 0.15, ease: 'easeOut' })
     return ctrl.stop
-  }, [numVal])
+  }, [numVal, isNumeric])
 
   const isUp = trendDirection === 'up'
 
   return (
     <motion.div
+      role="region"
+      aria-label={`${label}: ${typeof value === 'number' ? value.toLocaleString() : value}${unit ? ' ' + unit : ''}${trend ? ', ' + trend : ''}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: delay * 0.15, duration: 0.5 }}
@@ -30,7 +36,7 @@ export default function KPICard({ label, value, unit, trend, trendDirection, del
       <p className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold mb-3 relative z-10">{label}</p>
       
       <motion.p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-400 mb-2 relative z-10 tracking-tight truncate">
-        {display}
+        {isNumeric ? display : strVal}
       </motion.p>
       
       {trend && (

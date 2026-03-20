@@ -1,10 +1,11 @@
 import { Component } from 'react'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
+import * as Sentry from '@sentry/react'
 
 export default class ErrorBoundary extends Component {
   constructor(props) {
     super(props)
-    this.state = { hasError: false, error: null }
+    this.state = { hasError: false, error: null, eventId: null }
   }
 
   static getDerivedStateFromError(error) {
@@ -13,6 +14,11 @@ export default class ErrorBoundary extends Component {
 
   componentDidCatch(error, errorInfo) {
     console.error('ErrorBoundary caught:', error, errorInfo)
+    // Report to Sentry if configured
+    if (import.meta.env.VITE_SENTRY_DSN) {
+      const eventId = Sentry.captureException(error, { extra: errorInfo })
+      this.setState({ eventId })
+    }
   }
 
   render() {

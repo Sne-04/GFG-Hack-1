@@ -227,22 +227,22 @@ export default function LandingPage() {
                 <p className="text-[11px] text-primary/80 font-medium mb-3 h-8">{m.role}</p>
                 <div className="flex items-center justify-center gap-2">
                   {m.github && (
-                    <a href={m.github} target="_blank" rel="noopener" className="text-slate-500 hover:text-white transition-colors p-1.5 glass rounded-lg" title="GitHub">
+                    <a href={m.github} target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-white transition-colors p-1.5 glass rounded-lg" title="GitHub">
                       <Github size={14} />
                     </a>
                   )}
                   {m.linkedin && (
-                    <a href={m.linkedin} target="_blank" rel="noopener" className="text-slate-500 hover:text-blue-400 transition-colors p-1.5 glass rounded-lg" title="LinkedIn">
+                    <a href={m.linkedin} target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-blue-400 transition-colors p-1.5 glass rounded-lg" title="LinkedIn">
                       <Linkedin size={14} />
                     </a>
                   )}
                   {m.twitter && (
-                    <a href={m.twitter} target="_blank" rel="noopener" className="text-slate-500 hover:text-[#1DA1F2] transition-colors p-1.5 glass rounded-lg" title="Twitter">
+                    <a href={m.twitter} target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-[#1DA1F2] transition-colors p-1.5 glass rounded-lg" title="Twitter">
                       <Twitter size={14} />
                     </a>
                   )}
                   {m.website && (
-                    <a href={m.website} target="_blank" rel="noopener" className="text-slate-500 hover:text-emerald-400 transition-colors p-1.5 glass rounded-lg" title="Website">
+                    <a href={m.website} target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-emerald-400 transition-colors p-1.5 glass rounded-lg" title="Website">
                       <Globe size={14} />
                     </a>
                   )}
@@ -263,7 +263,7 @@ export default function LandingPage() {
             <span className="font-bold text-sm">DataMind AI</span>
           </div>
           <p className="text-xs text-slate-500">Built for GFG Hackfest 2026</p>
-          <a href="https://github.com/Sne-04/GFG-Hack-1" target="_blank" rel="noopener" className="text-slate-500 hover:text-white transition-colors">
+          <a href="https://github.com/Sne-04/GFG-Hack-1" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-white transition-colors">
             <Github size={18} />
           </a>
         </div>

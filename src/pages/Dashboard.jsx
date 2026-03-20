@@ -14,6 +14,7 @@ import FilterBar from '../components/FilterBar'
 import Header from '../components/Header'
 import AIChat from '../components/AIChat'
 import UserMenu from '../components/UserMenu'
+import OnboardingTour from '../components/OnboardingTour'
 import { useAuth } from '../contexts/AuthContext'
 import { parseCSV, getSchema, getSampleRows, getCategoricalColumns } from '../utils/csvParser'
 import { queryOpenAI } from '../utils/openaiApi'
@@ -41,8 +42,19 @@ export default function Dashboard() {
   const contentRef = useRef(null)
   const outputRef = useRef(null)
 
-  // Load recent queries from DB on mount
+  // Load recent queries from DB on mount + restore saved dashboard if navigated from /dashboards
   useEffect(() => {
+    const restore = sessionStorage.getItem('datamind-restore')
+    if (restore) {
+      try {
+        const { result, query, csvName, schema: savedSchema } = JSON.parse(restore)
+        setResult({ ...result, query })
+        setCsvFile(csvName)
+        setSchema(savedSchema)
+      } catch { /* ignore bad data */ }
+      sessionStorage.removeItem('datamind-restore')
+    }
+
     if (user && supabaseEnabled) {
       getRecentQueries(user.id, 10).then(queries => {
         if (queries.length) {
@@ -142,7 +154,7 @@ export default function Dashboard() {
         }
       }
     } catch (e) {
-      setError(e.message || 'AI is thinking... please retry')
+      setError(e.message || 'Something went wrong. Try asking in a different way.')
     }
     setLoading(false)
     // Auto-scroll to results
@@ -168,6 +180,7 @@ export default function Dashboard() {
 
   return (
     <div className={`flex flex-col md:flex-row h-screen overflow-hidden relative w-full transition-colors duration-300 ${darkMode ? 'bg-[#08080c] text-slate-200' : 'bg-[#f0f2f5] text-slate-800'}`}>
+      <OnboardingTour />
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && <div className="fixed inset-0 bg-black/70 z-40 md:hidden" onClick={() => setIsSidebarOpen(false)} />}
       
@@ -183,10 +196,15 @@ export default function Dashboard() {
           <button className="md:hidden text-slate-400 hover:text-white px-2" onClick={() => setIsSidebarOpen(false)} aria-label="Close sidebar">✕</button>
         </div>
 
-        <div className="p-4">
+        <div className="p-4 space-y-2">
           <button onClick={() => { setResult(null); setError(null) }} className="w-full glow-btn rounded-lg py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 text-white">
             <Plus size={14}/>New Dashboard
           </button>
+          {user && supabaseEnabled && (
+            <Link to="/dashboards" className="w-full flex items-center justify-center gap-1.5 glass rounded-lg py-2 text-xs text-slate-400 hover:text-primary hover:border-primary/30 transition-all">
+              <Database size={12}/>My Dashboards
+            </Link>
+          )}
         </div>
 
         {/* Quota badge */}
@@ -441,10 +459,10 @@ export default function Dashboard() {
               {/* Action Buttons (SQL / Description) */}
               <div className="flex gap-3 mb-6">
                 <button onClick={() => setResultTab('sql')} className={`text-xs px-4 py-2 rounded-lg transition-all font-medium border ${resultTab === 'sql' ? 'bg-primary/20 text-indigo-300 border-primary/30' : 'glass text-slate-400 hover:text-slate-200 border-white/5 hover:border-white/10'}`}>
-                  Generated SQL Query
+                  How we found the answer
                 </button>
                 <button onClick={() => setResultTab('trend')} className={`text-xs px-4 py-2 rounded-lg transition-all font-medium border ${resultTab === 'trend' ? 'bg-primary/20 text-indigo-300 border-primary/30' : 'glass text-slate-400 hover:text-slate-200 border-white/5 hover:border-white/10'}`}>
-                  Description & Trend Analysis
+                  What&apos;s happening with your data
                 </button>
               </div>
 
@@ -517,11 +535,19 @@ export default function Dashboard() {
       {/* Mobile Right Overlay */}
       {isRightPanelOpen && <div className="fixed inset-0 bg-black/70 z-40 md:hidden" onClick={() => setIsRightPanelOpen(false)} />}
 
-      {/* RIGHT PANEL */}
-      <aside className={`fixed inset-y-0 right-0 z-50 transform transition-all md:relative md:translate-x-0 w-80 border-l flex flex-col shrink-0 ${isRightPanelOpen ? 'translate-x-0' : 'translate-x-full'} ${darkMode ? 'bg-[#08080c] border-white/5' : 'bg-white border-slate-200'}`}>
+      {/* RIGHT PANEL — bottom sheet on mobile, fixed sidebar on desktop */}
+      <aside className={`fixed z-50 transform transition-all flex flex-col shrink-0
+        bottom-0 left-0 right-0 h-[80vh] rounded-t-2xl border-t
+        md:relative md:inset-y-auto md:left-auto md:right-auto md:h-auto md:w-80 md:rounded-none md:border-t-0 md:border-l md:translate-y-0
+        ${isRightPanelOpen ? 'translate-y-0' : 'translate-y-full md:translate-y-0'}
+        ${darkMode ? 'bg-[#08080c] border-white/5' : 'bg-white border-slate-200'}`}>
+        {/* Drag handle (mobile only) */}
+        <div className="md:hidden flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-white/20" />
+        </div>
         <div className="flex border-b border-white/5 items-center p-4">
           <button className="md:hidden text-slate-400 hover:text-white px-2 mr-2 border-r border-white/5" onClick={() => setIsRightPanelOpen(false)} aria-label="Close chat panel">✕</button>
-          <span className="font-bold text-sm text-slate-200">Assistant & Data</span>
+          <span className="font-bold text-sm text-slate-200">AI Assistant</span>
         </div>
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 border-b border-white/5">
