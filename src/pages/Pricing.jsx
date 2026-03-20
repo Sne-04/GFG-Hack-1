@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Check, X, Zap, Crown, Building2, ArrowRight, Database, Sparkles } from 'lucide-react'
+import { Check, X, Zap, Crown, Building2, ArrowRight, Database, Sparkles, Tag, Loader2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { PLANS, formatPrice } from '../utils/quota'
 
@@ -9,7 +9,40 @@ export default function Pricing() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [billing, setBilling] = useState('monthly')
-  const [loading, setLoading] = useState(null) // track which plan is loading
+  const [loading, setLoading] = useState(null)
+
+  // Coupon state per plan
+  const [couponInputs, setCouponInputs] = useState({ pro: '', enterprise: '' })
+  const [couponStatus, setCouponStatus] = useState({ pro: null, enterprise: null })
+  const [applyingCoupon, setApplyingCoupon] = useState({ pro: false, enterprise: false })
+
+  const applyCoupon = async (planId) => {
+    const code = couponInputs[planId]?.trim()
+    if (!code) return
+
+    setApplyingCoupon(prev => ({ ...prev, [planId]: true }))
+    try {
+      const res = await fetch('/api/validate-coupon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, plan: planId, billing }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setCouponStatus(prev => ({ ...prev, [planId]: { valid: false, error: data.error } }))
+      } else {
+        setCouponStatus(prev => ({ ...prev, [planId]: data }))
+      }
+    } catch {
+      setCouponStatus(prev => ({ ...prev, [planId]: { valid: false, error: 'Failed to validate coupon' } }))
+    }
+    setApplyingCoupon(prev => ({ ...prev, [planId]: false }))
+  }
+
+  const removeCoupon = (planId) => {
+    setCouponStatus(prev => ({ ...prev, [planId]: null }))
+    setCouponInputs(prev => ({ ...prev, [planId]: '' }))
+  }
 
   const handleUpgrade = async (planId) => {
     if (!user) {
@@ -22,10 +55,33 @@ export default function Pricing() {
       return
     }
 
+    const coupon = couponStatus[planId]
     setLoading(planId)
 
     try {
-      // Create Razorpay order
+      // 100% free coupon — activate without Razorpay
+      if (coupon?.isFree) {
+        const verifyRes = await fetch('/api/razorpay-verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            freeActivation: true,
+            couponCode: coupon.code,
+            plan: planId,
+            billing,
+            userId: user.id,
+          }),
+        })
+        const verifyData = await verifyRes.json()
+        if (verifyData.success) {
+          navigate('/settings?tab=billing&upgraded=true')
+        } else {
+          alert('Activation failed. Please try again.')
+        }
+        return
+      }
+
+      // Create Razorpay order (with optional discount)
       const res = await fetch('/api/razorpay-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -34,6 +90,7 @@ export default function Pricing() {
           billing,
           userId: user.id,
           userEmail: user.email,
+          couponCode: coupon?.code || null,
         }),
       })
 
@@ -54,7 +111,6 @@ export default function Pricing() {
         },
         theme: { color: '#6366f1' },
         handler: async function (response) {
-          // Verify payment server-side
           try {
             const verifyRes = await fetch('/api/razorpay-verify', {
               method: 'POST',
@@ -68,7 +124,6 @@ export default function Pricing() {
                 userId: user.id,
               }),
             })
-
             const verifyData = await verifyRes.json()
             if (verifyData.success) {
               navigate('/settings?tab=billing&upgraded=true')
@@ -187,11 +242,26 @@ export default function Pricing() {
       <div className="max-w-5xl mx-auto px-6 pb-20">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {plans.map((plan, i) => {
-            const price = plan.price === 0
+            const basePrice = plan.price === 0
               ? 0
               : billing === 'yearly'
                 ? plan.priceYearly
                 : plan.priceMonthly
+
+            const status = couponStatus[plan.id]
+            const displayPrice = status?.valid && status.finalPrice !== undefined
+              ? status.finalPrice
+              : basePrice
+
+            const ctaLabel = loading === plan.id
+              ? 'Processing...'
+              : status?.isFree
+                ? 'Activate Free'
+                : plan.cta
+
+            const ctaStyle = status?.isFree
+              ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]'
+              : plan.ctaStyle
 
             return (
               <motion.div
@@ -217,28 +287,86 @@ export default function Pricing() {
 
                 <h3 className="text-lg font-bold text-white mb-1">{plan.name}</h3>
 
-                <div className="flex items-baseline gap-1 mb-4">
-                  <span className="text-3xl font-black text-white">
-                    {price === 0 ? '₹0' : formatPrice(price)}
+                {/* Price display */}
+                <div className="flex items-baseline gap-1 mb-1">
+                  <span className={`text-3xl font-black ${status?.isFree ? 'text-emerald-400' : 'text-white'}`}>
+                    {status?.isFree ? 'FREE' : displayPrice === 0 ? '₹0' : formatPrice(displayPrice)}
                   </span>
-                  {price > 0 && (
+                  {displayPrice > 0 && !status?.isFree && (
                     <span className="text-xs text-slate-500">/{billing === 'yearly' ? 'year' : 'month'}</span>
                   )}
                 </div>
 
-                {billing === 'yearly' && plan.priceMonthly && (
-                  <p className="text-[10px] text-emerald-400 -mt-3 mb-4">
+                {/* Original price strikethrough when coupon applied */}
+                {status?.valid && !status.isFree && basePrice > 0 && (
+                  <p className="text-[10px] text-slate-500 mb-1">
+                    <span className="line-through">{formatPrice(basePrice)}</span>
+                    <span className="text-emerald-400 ml-1">{status.discount}% off applied</span>
+                  </p>
+                )}
+
+                {billing === 'yearly' && plan.priceMonthly && !status?.valid && (
+                  <p className="text-[10px] text-emerald-400 mb-4">
                     Save {formatPrice(plan.priceMonthly * 12 - plan.priceYearly)}/year
                   </p>
                 )}
 
-                <button
-                  onClick={plan.ctaAction}
-                  disabled={loading === plan.id}
-                  className={`w-full rounded-xl py-3 text-sm font-semibold transition-all mb-6 ${plan.ctaStyle} ${loading === plan.id ? 'opacity-50 cursor-wait' : ''}`}
-                >
-                  {loading === plan.id ? 'Processing...' : plan.cta}
-                </button>
+                <div className="mb-6 mt-4">
+                  <button
+                    onClick={plan.ctaAction}
+                    disabled={loading === plan.id}
+                    className={`w-full rounded-xl py-3 text-sm font-semibold transition-all ${ctaStyle} ${loading === plan.id ? 'opacity-50 cursor-wait' : ''}`}
+                  >
+                    {ctaLabel}
+                  </button>
+
+                  {/* Coupon input for paid plans */}
+                  {plan.id !== 'free' && (
+                    <div className="mt-3">
+                      {status?.valid ? (
+                        <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2.5 py-2">
+                          <span className="text-[10px] text-emerald-400 flex items-center gap-1.5">
+                            <Check size={10} />
+                            {status.label}
+                            {status.isFree ? ' — 100% FREE!' : ` — ${status.discount}% off`}
+                          </span>
+                          <button onClick={() => removeCoupon(plan.id)} className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors ml-2">
+                            Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-1.5">
+                          <div className="flex-1 flex items-center bg-white/5 rounded-lg px-2.5 gap-1.5 focus-within:ring-1 focus-within:ring-primary/40">
+                            <Tag size={11} className="text-slate-600 shrink-0" />
+                            <input
+                              value={couponInputs[plan.id] || ''}
+                              onChange={e => {
+                                const val = e.target.value.toUpperCase()
+                                setCouponInputs(prev => ({ ...prev, [plan.id]: val }))
+                                if (couponStatus[plan.id]?.error) {
+                                  setCouponStatus(prev => ({ ...prev, [plan.id]: null }))
+                                }
+                              }}
+                              onKeyDown={e => e.key === 'Enter' && applyCoupon(plan.id)}
+                              placeholder="Coupon code"
+                              className="flex-1 bg-transparent py-1.5 text-[11px] text-slate-200 placeholder:text-slate-600 outline-none"
+                            />
+                          </div>
+                          <button
+                            onClick={() => applyCoupon(plan.id)}
+                            disabled={applyingCoupon[plan.id] || !couponInputs[plan.id]?.trim()}
+                            className="px-3 py-1.5 rounded-lg bg-primary/20 text-primary text-[10px] font-semibold hover:bg-primary/30 transition-colors disabled:opacity-40"
+                          >
+                            {applyingCoupon[plan.id] ? <Loader2 size={10} className="animate-spin" /> : 'Apply'}
+                          </button>
+                        </div>
+                      )}
+                      {status?.valid === false && status.error && (
+                        <p className="text-[10px] text-red-400 mt-1 px-1">{status.error}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 <div className="space-y-2.5">
                   {plan.features.map((feature, j) => (

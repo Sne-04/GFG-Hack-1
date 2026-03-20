@@ -1,5 +1,6 @@
 import { createHmac } from 'crypto'
 import { createClient } from '@supabase/supabase-js'
+import { validateCoupon } from './coupons.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -16,6 +17,8 @@ export default async function handler(req, res) {
 
   try {
     const {
+      freeActivation,
+      couponCode,
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature,
@@ -24,11 +27,32 @@ export default async function handler(req, res) {
       userId,
     } = req.body
 
+    // ── Free coupon activation (100% off, no Razorpay payment) ──
+    if (freeActivation) {
+      if (!couponCode || !plan || !billing || !userId) {
+        return res.status(400).json({ error: 'Missing fields for free activation' })
+      }
+
+      const coupon = validateCoupon(couponCode, plan)
+      if (!coupon.valid || !coupon.isFree) {
+        return res.status(400).json({ error: 'Invalid free activation coupon' })
+      }
+
+      await activatePlan({ supabaseUrl, supabaseServiceKey, userId, plan, billing, paymentId: `free_coupon_${couponCode}`, orderId: `free_${Date.now()}` })
+
+      return res.status(200).json({
+        success: true,
+        message: `Plan activated free with coupon ${couponCode}`,
+        plan,
+        billing,
+      })
+    }
+
+    // ── Normal Razorpay payment verification ──
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return res.status(400).json({ error: 'Missing payment verification fields' })
     }
 
-    // Verify signature
     const body = razorpay_order_id + '|' + razorpay_payment_id
     const expectedSignature = createHmac('sha256', keySecret)
       .update(body)
@@ -38,37 +62,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid payment signature' })
     }
 
-    // Payment verified! Update user's plan in Supabase
-    if (supabaseUrl && supabaseServiceKey) {
-      const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
-      // Calculate plan expiry
-      const now = new Date()
-      const expiresAt = new Date(now)
-      if (billing === 'yearly') {
-        expiresAt.setFullYear(expiresAt.getFullYear() + 1)
-      } else {
-        expiresAt.setMonth(expiresAt.getMonth() + 1)
-      }
-
-      // Update profile with plan info
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          plan: plan,
-          billing_period: billing,
-          razorpay_payment_id,
-          razorpay_order_id,
-          plan_expires_at: expiresAt.toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('user_id', userId)
-
-      if (profileError) {
-        console.error('Failed to update profile:', profileError)
-        // Payment was successful, don't fail — just log
-      }
-    }
+    await activatePlan({ supabaseUrl, supabaseServiceKey, userId, plan, billing, paymentId: razorpay_payment_id, orderId: razorpay_order_id })
 
     return res.status(200).json({
       success: true,
@@ -79,5 +73,35 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('Payment verification error:', error)
     return res.status(500).json({ error: 'Payment verification failed' })
+  }
+}
+
+async function activatePlan({ supabaseUrl, supabaseServiceKey, userId, plan, billing, paymentId, orderId }) {
+  if (!supabaseUrl || !supabaseServiceKey) return
+
+  const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+  const now = new Date()
+  const expiresAt = new Date(now)
+  if (billing === 'yearly') {
+    expiresAt.setFullYear(expiresAt.getFullYear() + 1)
+  } else {
+    expiresAt.setMonth(expiresAt.getMonth() + 1)
+  }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      plan,
+      billing_period: billing,
+      razorpay_payment_id: paymentId,
+      razorpay_order_id: orderId,
+      plan_expires_at: expiresAt.toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('user_id', userId)
+
+  if (error) {
+    console.error('Failed to update profile plan:', error)
   }
 }

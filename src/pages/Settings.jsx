@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Database, User, Settings as SettingsIcon, CreditCard, Shield, ArrowLeft, Camera, Save, Check, Lock, Eye, EyeOff, Trash2, AlertTriangle } from 'lucide-react'
+import { Database, User, Settings as SettingsIcon, CreditCard, Shield, ArrowLeft, Camera, Save, Check, Lock, Eye, EyeOff, Trash2, AlertTriangle, Tag, Loader2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase, upsertProfile, getProfile } from '../utils/supabase'
 import { PLANS, getPlan, formatPrice } from '../utils/quota'
@@ -17,6 +17,9 @@ export default function SettingsPage() {
   const { user, plan: userPlan, refreshPlan } = useAuth()
   const [billingPeriod, setBillingPeriod] = useState('monthly')
   const [upgrading, setUpgrading] = useState(null)
+  const [couponInputs, setCouponInputs] = useState({ pro: '', enterprise: '' })
+  const [couponStatus, setCouponStatus] = useState({ pro: null, enterprise: null })
+  const [applyingCoupon, setApplyingCoupon] = useState({ pro: false, enterprise: false })
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'profile')
@@ -94,6 +97,33 @@ export default function SettingsPage() {
       setPwError(err.message || 'Failed to change password')
     }
     setSaving(false)
+  }
+
+  const applyCoupon = async (planId) => {
+    const code = couponInputs[planId]?.trim()
+    if (!code) return
+    setApplyingCoupon(prev => ({ ...prev, [planId]: true }))
+    try {
+      const res = await fetch('/api/validate-coupon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, plan: planId, billing: billingPeriod }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setCouponStatus(prev => ({ ...prev, [planId]: { valid: false, error: data.error } }))
+      } else {
+        setCouponStatus(prev => ({ ...prev, [planId]: data }))
+      }
+    } catch {
+      setCouponStatus(prev => ({ ...prev, [planId]: { valid: false, error: 'Failed to validate coupon' } }))
+    }
+    setApplyingCoupon(prev => ({ ...prev, [planId]: false }))
+  }
+
+  const removeCoupon = (planId) => {
+    setCouponStatus(prev => ({ ...prev, [planId]: null }))
+    setCouponInputs(prev => ({ ...prev, [planId]: '' }))
   }
 
   return (
@@ -312,12 +342,31 @@ export default function SettingsPage() {
                             window.open('mailto:support@datamind.ai?subject=Enterprise%20Plan%20Inquiry', '_blank')
                             return
                           }
+                          const coupon = couponStatus[planId]
                           setUpgrading(planId)
                           try {
+                            // 100% free coupon — skip Razorpay
+                            if (coupon?.isFree) {
+                              const verifyRes = await fetch('/api/razorpay-verify', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ freeActivation: true, couponCode: coupon.code, plan: planId, billing: billingPeriod, userId: user.id }),
+                              })
+                              const verifyData = await verifyRes.json()
+                              if (verifyData.success) {
+                                refreshPlan(user.id)
+                                setSaved(true)
+                                setTimeout(() => setSaved(false), 3000)
+                              } else {
+                                alert('Activation failed. Please try again.')
+                              }
+                              return
+                            }
+
                             const res = await fetch('/api/razorpay-order', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ plan: planId, billing: billingPeriod, userId: user.id, userEmail: user.email }),
+                              body: JSON.stringify({ plan: planId, billing: billingPeriod, userId: user.id, userEmail: user.email, couponCode: coupon?.code || null }),
                             })
                             const data = await res.json()
                             if (!res.ok) throw new Error(data.error)
@@ -357,16 +406,30 @@ export default function SettingsPage() {
                           }
                         }
 
+                        const cs = couponStatus[planId]
+                        const displayPrice = cs?.valid && cs.finalPrice !== undefined ? cs.finalPrice : price
+
                         return (
                           <div key={planId} className={`glass rounded-2xl p-5 border transition-all ${isPro ? 'border-white/5 hover:border-primary/30' : 'border-white/5 hover:border-secondary/30'}`}>
                             <h4 className="font-bold text-white text-sm mb-0.5">{p.name}</h4>
-                            <p className={`text-xl font-black mb-1 ${isPro ? 'text-primary' : 'text-secondary'}`}>
-                              {formatPrice(price)}<span className="text-xs text-slate-500 font-normal">/{billingPeriod === 'yearly' ? 'yr' : 'mo'}</span>
-                            </p>
-                            {billingPeriod === 'yearly' && (
+                            <div className="flex items-baseline gap-1 mb-0.5">
+                              <p className={`text-xl font-black ${cs?.isFree ? 'text-emerald-400' : isPro ? 'text-primary' : 'text-secondary'}`}>
+                                {cs?.isFree ? 'FREE' : formatPrice(displayPrice)}
+                              </p>
+                              {!cs?.isFree && (
+                                <span className="text-xs text-slate-500 font-normal">/{billingPeriod === 'yearly' ? 'yr' : 'mo'}</span>
+                              )}
+                            </div>
+                            {cs?.valid && !cs.isFree && (
+                              <p className="text-[9px] mb-1">
+                                <span className="text-slate-500 line-through">{formatPrice(price)}</span>
+                                <span className="text-emerald-400 ml-1">{cs.discount}% off</span>
+                              </p>
+                            )}
+                            {billingPeriod === 'yearly' && !cs?.valid && (
                               <p className="text-[9px] text-emerald-400 mb-2">Save {formatPrice(p.priceMonthly * 12 - p.priceYearly)}/year</p>
                             )}
-                            <div className="space-y-1.5 text-[10px] text-slate-400 mb-4">
+                            <div className="space-y-1.5 text-[10px] text-slate-400 mb-3 mt-2">
                               {p.features.slice(0, 4).map((f, i) => (
                                 <div key={i} className="flex items-center gap-1.5"><Check size={10} className="text-emerald-400" /> {f}</div>
                               ))}
@@ -375,11 +438,54 @@ export default function SettingsPage() {
                               onClick={handleUpgrade}
                               disabled={upgrading === planId}
                               className={`w-full rounded-lg py-2 text-xs font-semibold transition-all ${
-                                isPro ? 'glow-btn text-white' : 'border border-secondary/30 text-secondary hover:bg-secondary/10'
+                                cs?.isFree
+                                  ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
+                                  : isPro ? 'glow-btn text-white' : 'border border-secondary/30 text-secondary hover:bg-secondary/10'
                               } ${upgrading === planId ? 'opacity-50 cursor-wait' : ''}`}
                             >
-                              {upgrading === planId ? 'Processing...' : isPro ? 'Upgrade to Pro' : 'Contact Sales'}
+                              {upgrading === planId ? 'Processing...' : cs?.isFree ? 'Activate Free' : isPro ? 'Upgrade to Pro' : 'Contact Sales'}
                             </button>
+
+                            {/* Coupon input */}
+                            {isPro && (
+                              <div className="mt-2.5">
+                                {cs?.valid ? (
+                                  <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2 py-1.5">
+                                    <span className="text-[9px] text-emerald-400 flex items-center gap-1">
+                                      <Check size={9} /> {cs.label}{cs.isFree ? ' — FREE!' : ` — ${cs.discount}% off`}
+                                    </span>
+                                    <button onClick={() => removeCoupon(planId)} className="text-[9px] text-slate-500 hover:text-slate-300 ml-1">✕</button>
+                                  </div>
+                                ) : (
+                                  <div className="flex gap-1">
+                                    <div className="flex-1 flex items-center bg-white/5 rounded-lg px-2 gap-1 focus-within:ring-1 focus-within:ring-primary/40">
+                                      <Tag size={9} className="text-slate-600 shrink-0" />
+                                      <input
+                                        value={couponInputs[planId] || ''}
+                                        onChange={e => {
+                                          const val = e.target.value.toUpperCase()
+                                          setCouponInputs(prev => ({ ...prev, [planId]: val }))
+                                          if (couponStatus[planId]?.error) setCouponStatus(prev => ({ ...prev, [planId]: null }))
+                                        }}
+                                        onKeyDown={e => e.key === 'Enter' && applyCoupon(planId)}
+                                        placeholder="Coupon code"
+                                        className="flex-1 bg-transparent py-1.5 text-[10px] text-slate-200 placeholder:text-slate-600 outline-none"
+                                      />
+                                    </div>
+                                    <button
+                                      onClick={() => applyCoupon(planId)}
+                                      disabled={applyingCoupon[planId] || !couponInputs[planId]?.trim()}
+                                      className="px-2 py-1.5 rounded-lg bg-primary/20 text-primary text-[9px] font-semibold hover:bg-primary/30 transition-colors disabled:opacity-40"
+                                    >
+                                      {applyingCoupon[planId] ? <Loader2 size={9} className="animate-spin" /> : 'Apply'}
+                                    </button>
+                                  </div>
+                                )}
+                                {cs?.valid === false && cs.error && (
+                                  <p className="text-[9px] text-red-400 mt-1">{cs.error}</p>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )
                       })}
