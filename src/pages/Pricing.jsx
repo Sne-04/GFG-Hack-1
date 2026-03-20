@@ -4,9 +4,10 @@ import { motion } from 'framer-motion'
 import { Check, X, Zap, Crown, Building2, ArrowRight, Database, Sparkles, Tag, Loader2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { PLANS, formatPrice } from '../utils/quota'
+import { activatePlanClient } from '../utils/supabase'
 
 export default function Pricing() {
-  const { user } = useAuth()
+  const { user, refreshPlan } = useAuth()
   const navigate = useNavigate()
   const [billing, setBilling] = useState('monthly')
   const [loading, setLoading] = useState(null)
@@ -74,7 +75,10 @@ export default function Pricing() {
         })
         const verifyData = await verifyRes.json()
         if (verifyData.success) {
-          navigate('/settings?tab=billing&upgraded=true')
+          // Save plan directly to Supabase using user's session
+          await activatePlanClient(user.id, planId, billing).catch(() => {})
+          await refreshPlan(user.id)
+          navigate('/dashboard?upgraded=true')
         } else {
           alert('Activation failed. Please try again.')
         }

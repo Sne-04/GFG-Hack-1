@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Database, User, Settings as SettingsIcon, CreditCard, Shield, ArrowLeft, Camera, Save, Check, Lock, Eye, EyeOff, Trash2, AlertTriangle, Tag, Loader2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { supabase, upsertProfile, getProfile } from '../utils/supabase'
+import { supabase, upsertProfile, getProfile, activatePlanClient } from '../utils/supabase'
 import { PLANS, getPlan, formatPrice } from '../utils/quota'
 
 const TABS = [
@@ -354,7 +354,8 @@ export default function SettingsPage() {
                               })
                               const verifyData = await verifyRes.json()
                               if (verifyData.success) {
-                                refreshPlan(user.id)
+                                await activatePlanClient(user.id, planId, billingPeriod).catch(() => {})
+                                await refreshPlan(user.id)
                                 setSaved(true)
                                 setTimeout(() => setSaved(false), 3000)
                               } else {

@@ -168,6 +168,24 @@ export async function toggleFavorite(dashboardId, isFavorite) {
   return data
 }
 
+// ── Plan activation (client-side, uses user's own session) ──
+
+export async function activatePlanClient(userId, plan, billing) {
+  if (!supabase) return null
+  const now = new Date()
+  const expiresAt = new Date(now)
+  if (billing === 'yearly') {
+    expiresAt.setFullYear(expiresAt.getFullYear() + 1)
+  } else {
+    expiresAt.setMonth(expiresAt.getMonth() + 1)
+  }
+  return upsertProfile(userId, {
+    plan,
+    billing_period: billing,
+    plan_expires_at: expiresAt.toISOString(),
+  })
+}
+
 // ── Usage tracking helpers ──
 
 export async function incrementDailyUsage(userId) {

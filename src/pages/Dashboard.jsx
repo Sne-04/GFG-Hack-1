@@ -216,9 +216,14 @@ export default function Dashboard() {
                   </span>
                 </div>
                 {!isUnlimited && used >= limit && (
-                  <button onClick={() => window.location.href = '/pricing'} className="w-full mt-2 text-[9px] text-primary hover:text-primary/80 font-medium transition-colors">
+                  <a href="/pricing" className="w-full mt-2 block text-center text-[9px] bg-primary/10 hover:bg-primary/20 text-primary font-semibold rounded-md py-1 transition-colors">
                     ↑ Upgrade for more queries
-                  </button>
+                  </a>
+                )}
+                {!isUnlimited && used < limit && plan === 'free' && (
+                  <a href="/pricing" className="w-full mt-1.5 block text-center text-[9px] text-slate-500 hover:text-primary transition-colors">
+                    Upgrade to Pro →
+                  </a>
                 )}
               </div>
             </div>
@@ -435,7 +440,7 @@ export default function Dashboard() {
                   <div style={{marginBottom: '16px'}}>
                     <ChartCard chart={result.charts[0]} index={0} title={result.charts[0].title} subtitle={result.charts[0].subtitle} reason={result.charts[0].reason}>
                       <div style={{ height: 400 }}>
-                        <DynamicChart type={result.charts[0].type} data={result.charts[0].data} xKey={result.charts[0].xKey} yKeys={result.charts[0].yKeys} />
+                        <DynamicChart type={result.charts[0].type} data={result.charts[0].data} xKey={result.charts[0].xKey} yKeys={result.charts[0].yKeys} plan={plan} />
                       </div>
                     </ChartCard>
                   </div>
@@ -446,7 +451,7 @@ export default function Dashboard() {
                       {result.charts.slice(1).map((chart, i) => (
                         <ChartCard key={i+1} chart={chart} index={i+1} title={chart.title} subtitle={chart.subtitle} reason={chart.reason}>
                           <div style={{ height: 300 }}>
-                            <DynamicChart type={chart.type} data={chart.data} xKey={chart.xKey} yKeys={chart.yKeys} />
+                            <DynamicChart type={chart.type} data={chart.data} xKey={chart.xKey} yKeys={chart.yKeys} plan={plan} />
                           </div>
                         </ChartCard>
                       ))}
