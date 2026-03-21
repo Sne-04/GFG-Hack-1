@@ -14,6 +14,23 @@ export default class ErrorBoundary extends Component {
 
   componentDidCatch(error, errorInfo) {
     console.error('ErrorBoundary caught:', error, errorInfo)
+
+    // Chunk load errors happen when a lazy-loaded JS bundle fails to download
+    // (network blip, CDN hiccup). Auto-reload once to re-fetch from cache/CDN.
+    const isChunkError =
+      error?.name === 'ChunkLoadError' ||
+      error?.message?.includes('Loading chunk') ||
+      error?.message?.includes('Failed to fetch dynamically imported module') ||
+      error?.message?.includes('Importing a module script failed')
+
+    if (isChunkError && !sessionStorage.getItem('chunk-reload-attempted')) {
+      sessionStorage.setItem('chunk-reload-attempted', '1')
+      window.location.reload()
+      return
+    }
+    // Clear the flag so future genuine errors still show the UI
+    sessionStorage.removeItem('chunk-reload-attempted')
+
     // Report to Sentry if configured
     if (import.meta.env.VITE_SENTRY_DSN) {
       const eventId = Sentry.captureException(error, { extra: errorInfo })

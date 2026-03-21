@@ -151,7 +151,7 @@ export async function getSavedDashboards(userId, limit = 20) {
   if (!supabase) return []
   const { data } = await supabase
     .from('dashboards')
-    .select('id, csv_name, query_text, created_at, is_favorite')
+    .select('id, title, csv_name, query_text, created_at, is_favorite')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(limit)
