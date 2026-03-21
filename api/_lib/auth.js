@@ -6,8 +6,13 @@ import { createClient } from '@supabase/supabase-js'
 
 export async function verifyAuth(req) {
   const authHeader = req.headers['authorization'] || req.headers['Authorization']
-  if (!authHeader?.startsWith('Bearer ')) {
-    throw new AuthError('Missing or invalid Authorization header', 401)
+
+  // No token sent — allow as anonymous/guest user
+  if (!authHeader) return null
+
+  // Token present but malformed — reject
+  if (!authHeader.startsWith('Bearer ')) {
+    throw new AuthError('Invalid Authorization header format', 401)
   }
 
   const token = authHeader.slice(7)
