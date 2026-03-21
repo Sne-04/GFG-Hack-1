@@ -15,7 +15,8 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
   const [plan, setPlan] = useState('free')
   const [usage, setUsage] = useState(null)
-  const supabaseEnabled = !!supabase
+  const [supabaseReachable, setSupabaseReachable] = useState(true)
+  const supabaseEnabled = !!supabase && supabaseReachable
 
   // Fetch user's plan and daily usage from Supabase.
   // Reads from profiles table first, falls back to user_metadata
@@ -72,6 +73,10 @@ export function AuthProvider({ children }) {
       const u = session?.user ?? null
       setUser(u)
       if (u) refreshPlan(u.id)
+      setLoading(false)
+    }).catch(() => {
+      // Supabase unreachable (network/CORS issue) — load app in guest/demo mode
+      setSupabaseReachable(false)
       setLoading(false)
     })
 
