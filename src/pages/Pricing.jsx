@@ -75,12 +75,12 @@ export default function Pricing() {
         })
         const verifyData = await verifyRes.json()
         if (verifyData.success) {
-          // Save plan directly to Supabase using user's session
+          // Always save client-side too (covers case where server key not set)
           await activatePlanClient(user.id, planId, billing).catch(() => {})
           await refreshPlan(user.id)
           navigate('/dashboard?upgraded=true')
         } else {
-          alert('Activation failed. Please try again.')
+          alert(verifyData.error || 'Activation failed. Please try again.')
         }
         return
       }

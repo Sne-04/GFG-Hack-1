@@ -7,13 +7,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const keySecret = process.env.RAZORPAY_KEY_SECRET
   const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  if (!keySecret) {
-    return res.status(500).json({ error: 'Razorpay key secret not configured' })
-  }
 
   try {
     const {
@@ -27,7 +22,8 @@ export default async function handler(req, res) {
       userId,
     } = req.body
 
-    // ── Free coupon activation (100% off, no Razorpay payment) ──
+    // ── Free coupon activation (100% off — no Razorpay needed) ──────
+    // NOTE: keySecret is NOT required here — free coupons skip payment entirely
     if (freeActivation) {
       if (!couponCode || !plan || !billing || !userId) {
         return res.status(400).json({ error: 'Missing fields for free activation' })
@@ -35,20 +31,35 @@ export default async function handler(req, res) {
 
       const coupon = validateCoupon(couponCode, plan)
       if (!coupon.valid || !coupon.isFree) {
-        return res.status(400).json({ error: 'Invalid free activation coupon' })
+        return res.status(400).json({ error: 'Invalid or non-free coupon code' })
       }
 
-      await activatePlan({ supabaseUrl, supabaseServiceKey, userId, plan, billing, paymentId: `free_coupon_${couponCode}`, orderId: `free_${Date.now()}` })
+      // Save plan via service role key (server-side, preferred)
+      const serverSaved = await activatePlan({
+        supabaseUrl,
+        supabaseServiceKey,
+        userId,
+        plan,
+        billing,
+        paymentId: `free_coupon_${couponCode}`,
+        orderId: `free_${Date.now()}`,
+      })
 
       return res.status(200).json({
         success: true,
+        serverSaved,
         message: `Plan activated free with coupon ${couponCode}`,
         plan,
         billing,
       })
     }
 
-    // ── Normal Razorpay payment verification ──
+    // ── Normal Razorpay payment verification ────────────────────────
+    const keySecret = process.env.RAZORPAY_KEY_SECRET
+    if (!keySecret) {
+      return res.status(500).json({ error: 'Razorpay key secret not configured' })
+    }
+
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return res.status(400).json({ error: 'Missing payment verification fields' })
     }
@@ -62,7 +73,15 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid payment signature' })
     }
 
-    await activatePlan({ supabaseUrl, supabaseServiceKey, userId, plan, billing, paymentId: razorpay_payment_id, orderId: razorpay_order_id })
+    await activatePlan({
+      supabaseUrl,
+      supabaseServiceKey,
+      userId,
+      plan,
+      billing,
+      paymentId: razorpay_payment_id,
+      orderId: razorpay_order_id,
+    })
 
     return res.status(200).json({
       success: true,
@@ -70,14 +89,22 @@ export default async function handler(req, res) {
       plan,
       billing,
     })
+
   } catch (error) {
     console.error('Payment verification error:', error)
     return res.status(500).json({ error: 'Payment verification failed' })
   }
 }
 
+/**
+ * Saves the plan to Supabase using the service role key.
+ * Returns true if saved, false if skipped (keys not configured).
+ */
 async function activatePlan({ supabaseUrl, supabaseServiceKey, userId, plan, billing, paymentId, orderId }) {
-  if (!supabaseUrl || !supabaseServiceKey) return
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.warn('[razorpay-verify] No service role key — skipping server-side plan save. Client will save via session.')
+    return false
+  }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
@@ -102,6 +129,9 @@ async function activatePlan({ supabaseUrl, supabaseServiceKey, userId, plan, bil
     .eq('user_id', userId)
 
   if (error) {
-    console.error('Failed to update profile plan:', error)
+    console.error('[razorpay-verify] Failed to update profile plan:', error)
+    return false
   }
+
+  return true
 }
