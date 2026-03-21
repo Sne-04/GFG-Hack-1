@@ -3,14 +3,14 @@
   "configurations": [
     {
       "name": "DataMind AI — Dev Server",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--port", "5174"],
+      "runtimeExecutable": "/opt/homebrew/bin/node",
+      "runtimeArgs": ["node_modules/.bin/vite", "--port", "5174"],
       "port": 5174
     },
     {
       "name": "DataMind AI — Preview (Production Build)",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "preview"],
+      "runtimeExecutable": "/opt/homebrew/bin/node",
+      "runtimeArgs": ["node_modules/.bin/vite", "preview", "--port", "4173"],
       "port": 4173
     }
   ]
