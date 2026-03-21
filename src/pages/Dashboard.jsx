@@ -365,11 +365,12 @@ export default function Dashboard() {
 
           {/* Community support link — available to all plans */}
           <a
-            href="mailto:support@datamind.ai"
-            className={`flex items-center gap-1.5 text-[9px] mt-2 transition-colors ${darkMode ? 'text-slate-600 hover:text-slate-400' : 'text-slate-400 hover:text-slate-600'}`}
-            title="Community & Support"
+            href="mailto:support@datamind.ai?subject=DataMind%20AI%20Support"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`flex items-center gap-2 text-xs mt-2 px-3 py-2 rounded-lg border transition-all duration-200 ${darkMode ? 'text-slate-400 hover:text-white border-white/5 hover:border-primary/30 hover:bg-primary/10' : 'text-slate-500 hover:text-primary border-slate-200 hover:border-primary/30 hover:bg-primary/5'}`}
           >
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             Community & Support
           </a>
         </div>
