@@ -138,6 +138,15 @@ export async function saveDashboard(userId, csvName, schema, resultJson, queryTe
   return data
 }
 
+export async function getDashboardCount(userId) {
+  if (!supabase) return 0
+  const { count } = await supabase
+    .from('dashboards')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+  return count || 0
+}
+
 export async function getSavedDashboards(userId, limit = 20) {
   if (!supabase) return []
   const { data } = await supabase

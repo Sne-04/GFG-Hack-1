@@ -20,7 +20,7 @@ import { parseCSV, getSchema, getSampleRows, getCategoricalColumns } from '../ut
 import { queryOpenAI } from '../utils/openaiApi'
 import { buildPreComputedContext } from '../utils/dataEngine'
 import { validateAndFixResponse } from '../utils/responseValidator'
-import { saveQuery, getRecentQueries, saveDashboard, incrementDailyUsage } from '../utils/supabase'
+import { saveQuery, getRecentQueries, saveDashboard, incrementDailyUsage, getDashboardCount } from '../utils/supabase'
 import { checkQueryQuota, getPlanLimits, checkDashboardQuota } from '../utils/quota'
 
 export default function Dashboard() {
@@ -70,7 +70,8 @@ export default function Dashboard() {
     }
 
     if (user && supabaseEnabled) {
-      getRecentQueries(user.id, 10).then(queries => {
+      // Free plan shows last 20 queries; Pro/Enterprise show more
+      getRecentQueries(user.id, 20).then(queries => {
         if (queries.length) {
           setRecentQueries(queries.map(q => q.query_text))
         }
@@ -142,7 +143,7 @@ export default function Dashboard() {
     setLoading(true)
     setError(null)
     setResult(null)
-    setRecentQueries(p => [query, ...p.filter(q => q !== query)].slice(0, 10))
+    setRecentQueries(p => [query, ...p.filter(q => q !== query)].slice(0, 20))
 
     // Append active filters to query
     const filtersToUse = overrideFilters || activeFilters
@@ -361,6 +362,16 @@ export default function Dashboard() {
             </div>
             <UserMenu />
           </div>
+
+          {/* Community support link — available to all plans */}
+          <a
+            href="mailto:support@datamind.ai"
+            className={`flex items-center gap-1.5 text-[9px] mt-2 transition-colors ${darkMode ? 'text-slate-600 hover:text-slate-400' : 'text-slate-400 hover:text-slate-600'}`}
+            title="Community & Support"
+          >
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Community & Support
+          </a>
         </div>
       </aside>
 
@@ -447,12 +458,17 @@ export default function Dashboard() {
                   {user && supabaseEnabled && (
                     <button onClick={async () => {
                       try {
-                        const { data: dashboards } = await import('../utils/supabase').then(m => ({ data: null }))
-                        const quota = checkDashboardQuota(0, plan) // will check against DB count
+                        // Fetch real dashboard count then enforce free plan limit (3)
+                        const currentCount = await getDashboardCount(user.id)
+                        const quota = checkDashboardQuota(currentCount, plan)
+                        if (!quota.allowed) {
+                          alert(quota.reason)
+                          return
+                        }
                         await saveDashboard(user.id, csvFile, schema, result, result.query)
                         setSaved(true)
                       } catch (e) {
-                        if (e?.message?.includes('limit')) alert(e.message)
+                        alert(e?.message || 'Failed to save dashboard')
                         console.error(e)
                       }
                     }} disabled={saved}
