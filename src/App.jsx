@@ -14,6 +14,7 @@ const Settings = lazy(() => import('./pages/Settings'))
 const Pricing = lazy(() => import('./pages/Pricing'))
 const Dashboards = lazy(() => import('./pages/Dashboards'))
 const SharedDashboard = lazy(() => import('./pages/SharedDashboard'))
+const AuthCallback = lazy(() => import('./pages/AuthCallback'))
 
 function LoadingFallback() {
   return (
@@ -63,6 +64,7 @@ export default function App() {
               </AnimatedRoute>
             } />
             <Route path="/shared/:token" element={<AnimatedRoute><SharedDashboard /></AnimatedRoute>} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
           </Routes>
         </AnimatePresence>
       </Suspense>

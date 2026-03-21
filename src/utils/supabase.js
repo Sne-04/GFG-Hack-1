@@ -33,9 +33,12 @@ export async function signIn(email, password) {
 
 export async function signInWithGoogle() {
   if (!supabase) throw new Error('Supabase not configured')
+  // Use VITE_APP_URL if set (production), otherwise fall back to current origin (local dev).
+  // The /auth/callback route handles the token exchange for both hash and PKCE flows.
+  const base = import.meta.env.VITE_APP_URL?.replace(/\/$/, '') || window.location.origin
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: `${window.location.origin}/dashboard` }
+    options: { redirectTo: `${base}/auth/callback` }
   })
   if (error) throw error
   return data
