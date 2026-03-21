@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { Database, Plus, FileSpreadsheet, ChevronRight, AlertTriangle, Code, TrendingUp, Download, X, Sparkles, Save, Home, Sun, Moon, Lock } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Database, Plus, FileSpreadsheet, ChevronRight, AlertTriangle, Code, TrendingUp, Download, X, Sparkles, Save, Home, Sun, Moon, Lock, CheckCircle } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
 import ParticleBackground from '../components/ParticleBackground'
 import CSVUpload from '../components/CSVUpload'
 import QueryInput from '../components/QueryInput'
@@ -25,6 +25,8 @@ import { checkQueryQuota, getPlanLimits, checkDashboardQuota } from '../utils/qu
 
 export default function Dashboard() {
   const { user, supabaseEnabled, plan, usage, refreshPlan } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [upgradeBanner, setUpgradeBanner] = useState(false)
   const [csvData, setCsvData] = useState(null)
   const [csvFile, setCsvFile] = useState(null)
   const [schema, setSchema] = useState(null)
@@ -41,6 +43,18 @@ export default function Dashboard() {
   const [saved, setSaved] = useState(false)
   const contentRef = useRef(null)
   const outputRef = useRef(null)
+
+  // Show upgrade banner when redirected from pricing after successful activation
+  useEffect(() => {
+    if (searchParams.get('upgraded') === 'true') {
+      setUpgradeBanner(true)
+      setSearchParams({}, { replace: true }) // clean URL
+      // Force refresh plan so new plan shows immediately
+      if (user) refreshPlan(user.id)
+      const t = setTimeout(() => setUpgradeBanner(false), 6000)
+      return () => clearTimeout(t)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load recent queries from DB on mount + restore saved dashboard if navigated from /dashboards
   useEffect(() => {
@@ -181,6 +195,23 @@ export default function Dashboard() {
   return (
     <div className={`flex flex-col md:flex-row h-screen overflow-hidden relative w-full transition-colors duration-300 ${darkMode ? 'bg-[#08080c] text-slate-200' : 'bg-[#f0f2f5] text-slate-800'}`}>
       <OnboardingTour />
+
+      {/* Upgrade success banner */}
+      <AnimatePresence>
+        {upgradeBanner && (
+          <motion.div
+            initial={{ opacity: 0, y: -60 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -60 }}
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 bg-emerald-500 text-white px-5 py-3 rounded-xl shadow-xl font-medium text-sm"
+          >
+            <CheckCircle size={18} />
+            🎉 Plan activated! You now have {plan === 'pro' ? 'Pro' : plan === 'enterprise' ? 'Enterprise' : 'upgraded'} access.
+            <button onClick={() => setUpgradeBanner(false)} className="ml-2 opacity-70 hover:opacity-100"><X size={14}/></button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && <div className="fixed inset-0 bg-black/70 z-40 md:hidden" onClick={() => setIsSidebarOpen(false)} />}
       

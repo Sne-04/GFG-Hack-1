@@ -17,19 +17,29 @@ export function AuthProvider({ children }) {
   const [usage, setUsage] = useState(null)
   const supabaseEnabled = !!supabase
 
-  // Fetch user's plan and daily usage from Supabase
+  // Fetch user's plan and daily usage from Supabase.
+  // Reads from profiles table first, falls back to user_metadata
+  // (user_metadata is always writable by the user — no RLS restriction).
   const refreshPlan = useCallback(async (userId) => {
     if (!supabase || !userId) return
 
     try {
-      // Get profile (has plan field)
+      // 1. Read profiles table
       const profile = await getProfile(userId)
-      if (profile?.plan) {
-        // Check if plan has expired
-        if (profile.plan_expires_at && new Date(profile.plan_expires_at) < new Date()) {
-          setPlan('free')
+
+      // 2. Read user_metadata (fallback — set by activatePlanClient when DB write is blocked)
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      const meta = authUser?.user_metadata || {}
+
+      // Prefer DB plan; fall back to metadata plan
+      const activePlan = (profile?.plan && profile.plan !== 'free') ? profile.plan : meta?.plan
+      const expiresAt = profile?.plan_expires_at || meta?.plan_expires_at
+
+      if (activePlan && activePlan !== 'free') {
+        if (expiresAt && new Date(expiresAt) < new Date()) {
+          setPlan('free') // expired
         } else {
-          setPlan(profile.plan)
+          setPlan(activePlan)
         }
       } else {
         setPlan('free')

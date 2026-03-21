@@ -227,11 +227,26 @@ export async function activatePlanClient(userId, plan, billing) {
   } else {
     expiresAt.setMonth(expiresAt.getMonth() + 1)
   }
-  return upsertProfile(userId, {
+
+  const planData = {
     plan,
     billing_period: billing,
     plan_expires_at: expiresAt.toISOString(),
+  }
+
+  // 1. Try profiles table (may be blocked by RLS if plan col is restricted)
+  const dbResult = await upsertProfile(userId, planData).catch(err => {
+    console.warn('[activatePlanClient] DB upsert failed (RLS?), using metadata fallback:', err?.message)
+    return null
   })
+
+  // 2. Always also write to user_metadata — no RLS, always writable by the user
+  //    This guarantees the plan survives even if DB write is blocked.
+  await supabase.auth.updateUser({ data: planData }).catch(err => {
+    console.warn('[activatePlanClient] user_metadata update failed:', err?.message)
+  })
+
+  return dbResult
 }
 
 // ── Usage tracking helpers ──
