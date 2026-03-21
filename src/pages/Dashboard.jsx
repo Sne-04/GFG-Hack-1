@@ -265,13 +265,35 @@ export default function Dashboard() {
         <div className={`p-4 border-t space-y-3 ${darkMode ? 'border-white/5' : 'border-slate-100'}`}>
           <div>
             <p className="text-[9px] uppercase tracking-widest text-slate-500 font-semibold mb-2">Theme</p>
-            <div className="flex items-center gap-3">
-              <button onClick={() => setDarkMode(!darkMode)} className="flex items-center gap-1.5 glass rounded-lg px-2.5 py-1.5 text-[10px] font-medium hover:border-primary/30 transition-all" title={darkMode ? 'Switch to Light' : 'Switch to Dark'}>
-                {darkMode ? <Sun size={12} className="text-amber-400"/> : <Moon size={12} className="text-indigo-400"/>}
-                <span className="text-slate-400">{darkMode ? 'Light' : 'Dark'}</span>
-              </button>
+            {/* Dark / Light toggle */}
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className={`w-full flex items-center gap-2 glass rounded-lg px-2.5 py-2 text-[10px] font-medium hover:border-primary/30 transition-all mb-2`}
+              title={darkMode ? 'Switch to Light mode' : 'Switch to Dark mode'}
+            >
+              {darkMode ? <Sun size={12} className="text-amber-400"/> : <Moon size={12} className="text-indigo-500"/>}
+              <span className={darkMode ? 'text-slate-300' : 'text-slate-600'}>
+                {darkMode ? 'Switch to Light' : 'Switch to Dark'}
+              </span>
+            </button>
+            {/* Accent color picker */}
+            <div className="flex items-center gap-2">
+              <span className={`text-[9px] ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Accent:</span>
               {Object.entries(themeColors).map(([k, c]) => (
-                <button key={k} onClick={() => { setTheme(k); localStorage.setItem('datamind-theme', k) }} title={k === 'indigo' ? 'Indigo theme' : 'Emerald theme'} className={`w-5 h-5 rounded-full transition-all ${theme === k ? `ring-2 ring-offset-2 scale-110 ${darkMode ? 'ring-offset-[#0a0a0f]' : 'ring-offset-white'}` : 'opacity-50 hover:opacity-80'}`} style={{ background: c }}/>
+                <button
+                  key={k}
+                  onClick={() => { setTheme(k); localStorage.setItem('datamind-theme', k) }}
+                  title={k === 'indigo' ? 'Indigo (Purple)' : 'Emerald (Green)'}
+                  className={`flex items-center gap-1 text-[9px] rounded-md px-1.5 py-0.5 transition-all border ${
+                    theme === k
+                      ? `border-current font-semibold ${darkMode ? 'bg-white/5' : 'bg-slate-100'}`
+                      : `border-transparent opacity-50 hover:opacity-80`
+                  }`}
+                  style={{ color: c }}
+                >
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: c }}/>
+                  {k.charAt(0).toUpperCase() + k.slice(1)}
+                </button>
               ))}
             </div>
           </div>
@@ -483,7 +505,7 @@ export default function Dashboard() {
               {result.kpis?.length > 0 && (
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4 overflow-hidden">
                   {result.kpis.map((kpi, i) => (
-                    <KPICard key={i} {...kpi} trendDirection={kpi.trend_direction} delay={i} />
+                    <KPICard key={i} {...kpi} trendDirection={kpi.trend_direction} delay={i} darkMode={darkMode} />
                   ))}
                 </div>
               )}
@@ -493,7 +515,7 @@ export default function Dashboard() {
                 <div>
                   {/* First chart - full width */}
                   <div style={{marginBottom: '16px'}}>
-                    <ChartCard chart={result.charts[0]} index={0} title={result.charts[0].title} subtitle={result.charts[0].subtitle} reason={result.charts[0].reason}>
+                    <ChartCard chart={result.charts[0]} index={0} title={result.charts[0].title} subtitle={result.charts[0].subtitle} reason={result.charts[0].reason} darkMode={darkMode}>
                       <div style={{ height: 400 }}>
                         <DynamicChart type={result.charts[0].type} data={result.charts[0].data} xKey={result.charts[0].xKey} yKeys={result.charts[0].yKeys} plan={plan} />
                       </div>
@@ -504,7 +526,7 @@ export default function Dashboard() {
                   {result.charts.length > 1 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       {result.charts.slice(1).map((chart, i) => (
-                        <ChartCard key={i+1} chart={chart} index={i+1} title={chart.title} subtitle={chart.subtitle} reason={chart.reason}>
+                        <ChartCard key={i+1} chart={chart} index={i+1} title={chart.title} subtitle={chart.subtitle} reason={chart.reason} darkMode={darkMode}>
                           <div style={{ height: 300 }}>
                             <DynamicChart type={chart.type} data={chart.data} xKey={chart.xKey} yKeys={chart.yKeys} plan={plan} />
                           </div>
@@ -551,7 +573,7 @@ export default function Dashboard() {
         </div>
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className={`flex-1 overflow-y-auto p-4 border-b ${darkMode ? 'border-white/5' : 'border-slate-100'}`}>
-            <AIChat context={(() => {
+            <AIChat darkMode={darkMode} context={(() => {
               const parts = []
               if (csvData) {
                 parts.push(`CSV Columns: ${csvData.columns.join(', ')}`)
@@ -577,7 +599,7 @@ export default function Dashboard() {
               <div className="space-y-1.5">
                 {csvData.columns.map(col => (
                   <div key={col} className="glass rounded-lg p-2">
-                    <p className="text-[10px] font-medium text-slate-200">{col}</p>
+                    <p className={`text-[10px] font-medium ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>{col}</p>
                     <p className="text-[9px] text-slate-500 truncate">{csvData.data.slice(0, 3).map(r => r[col]).join(', ')}</p>
                   </div>
                 ))}

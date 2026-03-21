@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { getPlanLimits } from '../utils/quota'
 
-export default function AIChat({ context }) {
+export default function AIChat({ context, darkMode = true }) {
   const { plan } = useAuth()
   const [messages, setMessages] = useState([
     { role: 'assistant', content: "📊 Hi! I'm your DataMind AI analyst. I can only answer questions about your uploaded dataset. Ask me about trends, metrics, or insights from your data!" }
@@ -19,7 +19,7 @@ export default function AIChat({ context }) {
   }, [messages])
 
   const limits = getPlanLimits(plan)
-  const chatLimit = limits.aiChatMessages // -1 = unlimited
+  const chatLimit = limits.aiChatMessages
   const userMsgCount = messages.filter(m => m.role === 'user').length
   const limitReached = chatLimit !== -1 && userMsgCount >= chatLimit
 
@@ -48,6 +48,15 @@ export default function AIChat({ context }) {
     "Summarize the dataset"
   ]
 
+  // Theme-aware bubble styles
+  const assistantBubble = darkMode
+    ? { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px 12px 12px 0', padding: '10px 14px', color: '#e2e8f0' }
+    : { background: '#f1f5f9', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px 12px 12px 0', padding: '10px 14px', color: '#334155' }
+
+  const userBubble = darkMode
+    ? { background: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '12px 12px 0 12px', padding: '10px 14px', color: '#f1f5f9' }
+    : { background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '12px 12px 0 12px', padding: '10px 14px', color: '#1e293b' }
+
   return (
     <div className="flex flex-col h-full">
       <div ref={msgsRef} className="flex-1 overflow-y-auto space-y-3 p-2 mb-3">
@@ -72,11 +81,7 @@ export default function AIChat({ context }) {
             className={`flex gap-2 ${m.role === 'user' ? 'justify-end' : ''}`}
           >
             {m.role === 'assistant' && <Bot size={14} className="text-primary mt-1 shrink-0"/>}
-            <div style={
-              m.role === 'user'
-                ? { background: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '12px 12px 0 12px', padding: '10px 14px', color: '#f1f5f9' }
-                : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px 12px 12px 0', padding: '10px 14px', color: '#e2e8f0' }
-            } className="text-xs leading-relaxed max-w-[85%]">
+            <div style={m.role === 'user' ? userBubble : assistantBubble} className="text-xs leading-relaxed max-w-[85%]">
               {m.content}
             </div>
             {m.role === 'user' && <User size={14} className="text-secondary mt-1 shrink-0"/>}
@@ -85,7 +90,7 @@ export default function AIChat({ context }) {
         {loading && (
           <div className="flex gap-2">
             <Bot size={14} className="text-primary mt-1"/>
-            <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px 12px 12px 0', padding: '10px 14px', color: '#e2e8f0' }} className="text-xs italic flex items-center gap-1">
+            <div style={assistantBubble} className="text-xs italic flex items-center gap-1">
               Thinking <span className="animate-pulse">● ● ●</span>
             </div>
           </div>
@@ -96,7 +101,7 @@ export default function AIChat({ context }) {
       {limitReached && (
         <div className="mx-2 mb-3 p-3 rounded-xl bg-primary/10 border border-primary/20 text-center">
           <Lock size={14} className="text-primary mx-auto mb-1" />
-          <p className="text-[10px] text-slate-300 mb-2">
+          <p className={`text-[10px] mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
             You've used all <strong>{chatLimit}</strong> AI chat messages for this session.
           </p>
           <a href="/pricing" className="inline-block px-3 py-1 rounded-lg bg-primary text-white text-[10px] font-semibold hover:bg-primary/80 transition-colors">
@@ -107,19 +112,19 @@ export default function AIChat({ context }) {
 
       {/* Usage counter */}
       {chatLimit !== -1 && !limitReached && (
-        <p className="text-[9px] text-slate-600 text-right px-2 mb-1">
+        <p className="text-[9px] text-slate-500 text-right px-2 mb-1">
           {userMsgCount}/{chatLimit} messages used
         </p>
       )}
 
-      <div className="flex gap-2 border-t border-white/5 pt-3">
+      <div className={`flex gap-2 border-t pt-3 ${darkMode ? 'border-white/5' : 'border-slate-200'}`}>
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && send()}
           placeholder={limitReached ? 'Upgrade to continue chatting...' : 'Ask about this data...'}
           disabled={limitReached}
-          className="flex-1 glass rounded-lg px-3 py-2 text-xs bg-transparent outline-none text-slate-200 focus:ring-1 focus:ring-primary/30 disabled:opacity-40 disabled:cursor-not-allowed"
+          className={`flex-1 glass rounded-lg px-3 py-2 text-xs bg-transparent outline-none focus:ring-1 focus:ring-primary/30 disabled:opacity-40 disabled:cursor-not-allowed ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}
         />
         <button onClick={send} aria-label="Send message" disabled={loading || limitReached} className="glow-btn rounded-lg px-3 py-2 disabled:opacity-50">
           <Send size={12}/>
