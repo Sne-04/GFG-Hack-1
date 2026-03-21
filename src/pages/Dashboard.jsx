@@ -186,7 +186,7 @@ export default function Dashboard() {
       
       {/* LEFT SIDEBAR */}
       <aside className={`fixed inset-y-0 left-0 z-50 transform transition-all md:relative md:translate-x-0 w-60 border-r flex flex-col shrink-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${darkMode ? 'bg-[#08080c] border-white/5' : 'bg-white border-slate-200'}`}>
-        <div className="p-4 border-b border-white/5 flex items-center justify-between">
+        <div className={`p-4 border-b flex items-center justify-between ${darkMode ? 'border-white/5' : 'border-slate-100'}`}>
           <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <div className="w-6 h-6 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
               <Database size={14} className="text-white" />
@@ -223,7 +223,7 @@ export default function Dashboard() {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                  <div className={`flex-1 h-1.5 rounded-full overflow-hidden ${darkMode ? 'bg-white/5' : 'bg-slate-200'}`}>
                     <div
                       className={`h-full rounded-full transition-all ${isUnlimited || used / limit < 0.8 ? 'bg-primary' : used / limit < 1 ? 'bg-yellow-500' : 'bg-red-500'}`}
                       style={{ width: isUnlimited ? '15%' : `${Math.min(100, (used / limit) * 100)}%` }}
@@ -253,7 +253,7 @@ export default function Dashboard() {
           <p className="text-[9px] uppercase tracking-widest text-slate-500 font-semibold mb-2">Recent Queries</p>
           <div className="space-y-1">
             {(plan === 'free' ? recentQueries.slice(0, 20) : recentQueries).map((q, i) => (
-              <button key={i} onClick={() => handleQuery(q)} className="w-full text-left text-[10px] text-slate-400 hover:text-primary px-2 py-1.5 rounded-lg hover:bg-white/5 transition-all truncate">
+              <button key={i} onClick={() => handleQuery(q)} className={`w-full text-left text-[10px] text-slate-400 hover:text-primary px-2 py-1.5 rounded-lg transition-all truncate ${darkMode ? 'hover:bg-white/5' : 'hover:bg-slate-100'}`}>
                 <ChevronRight size={8} className="inline mr-1"/>{q}
               </button>
             ))}
@@ -262,16 +262,38 @@ export default function Dashboard() {
         </div>
 
         {/* Theme + Data Source */}
-        <div className="p-4 border-t border-white/5 space-y-3">
+        <div className={`p-4 border-t space-y-3 ${darkMode ? 'border-white/5' : 'border-slate-100'}`}>
           <div>
             <p className="text-[9px] uppercase tracking-widest text-slate-500 font-semibold mb-2">Theme</p>
-            <div className="flex items-center gap-3">
-              <button onClick={() => setDarkMode(!darkMode)} className="flex items-center gap-1.5 glass rounded-lg px-2.5 py-1.5 text-[10px] font-medium hover:border-primary/30 transition-all" title={darkMode ? 'Switch to Light' : 'Switch to Dark'}>
-                {darkMode ? <Sun size={12} className="text-amber-400"/> : <Moon size={12} className="text-indigo-400"/>}
-                <span className="text-slate-400">{darkMode ? 'Light' : 'Dark'}</span>
-              </button>
+            {/* Dark / Light toggle */}
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className={`w-full flex items-center gap-2 glass rounded-lg px-2.5 py-2 text-[10px] font-medium hover:border-primary/30 transition-all mb-2`}
+              title={darkMode ? 'Switch to Light mode' : 'Switch to Dark mode'}
+            >
+              {darkMode ? <Sun size={12} className="text-amber-400"/> : <Moon size={12} className="text-indigo-500"/>}
+              <span className={darkMode ? 'text-slate-300' : 'text-slate-600'}>
+                {darkMode ? 'Switch to Light' : 'Switch to Dark'}
+              </span>
+            </button>
+            {/* Accent color picker */}
+            <div className="flex items-center gap-2">
+              <span className={`text-[9px] ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Accent:</span>
               {Object.entries(themeColors).map(([k, c]) => (
-                <button key={k} onClick={() => { setTheme(k); localStorage.setItem('datamind-theme', k) }} className={`w-5 h-5 rounded-full transition-all ${theme === k ? 'ring-2 ring-offset-2 ring-offset-[#0a0a0f] scale-110' : 'opacity-50 hover:opacity-80'}`} style={{ background: c, ringColor: c }}/>
+                <button
+                  key={k}
+                  onClick={() => { setTheme(k); localStorage.setItem('datamind-theme', k) }}
+                  title={k === 'indigo' ? 'Indigo (Purple)' : 'Emerald (Green)'}
+                  className={`flex items-center gap-1 text-[9px] rounded-md px-1.5 py-0.5 transition-all border ${
+                    theme === k
+                      ? `border-current font-semibold ${darkMode ? 'bg-white/5' : 'bg-slate-100'}`
+                      : `border-transparent opacity-50 hover:opacity-80`
+                  }`}
+                  style={{ color: c }}
+                >
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: c }}/>
+                  {k.charAt(0).toUpperCase() + k.slice(1)}
+                </button>
               ))}
             </div>
           </div>
@@ -332,11 +354,11 @@ export default function Dashboard() {
                 <div className="w-20 h-20 mx-auto bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center mb-6 ring-1 ring-white/10 group-hover:ring-primary/30 transition-all duration-500">
                   <Database size={32} className="text-primary/80" />
                 </div>
-                <h2 className="text-3xl font-bold mb-3 tracking-tight text-white">Welcome to <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">DataMind AI</span></h2>
-                <p className="text-slate-400 mb-10 max-w-md mx-auto leading-relaxed">Instantly transform any raw CSV data into interactive intelligence. Upload your dataset or start with our playground data.</p>
+                <h2 className={`text-3xl font-bold mb-3 tracking-tight ${darkMode ? 'text-white' : 'text-slate-800'}`}>Welcome to <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">DataMind AI</span></h2>
+                <p className={`mb-10 max-w-md mx-auto leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Instantly transform any raw CSV data into interactive intelligence. Upload your dataset or start with our playground data.</p>
                 <div className="max-w-xs mx-auto space-y-4 relative z-10 flex flex-col items-center">
                   <div className="w-full"><CSVUpload onUpload={handleUpload} /></div>
-                  <button onClick={loadDemoData} className="w-full text-center border border-white/5 hover:border-primary/30 bg-black/40 hover:bg-primary/10 text-slate-300 hover:text-primary rounded-xl py-3.5 text-sm font-medium transition-all duration-300 flex items-center justify-center gap-2">
+                  <button onClick={loadDemoData} className={`w-full text-center hover:border-primary/30 hover:bg-primary/10 hover:text-primary rounded-xl py-3.5 text-sm font-medium transition-all duration-300 flex items-center justify-center gap-2 ${darkMode ? 'border border-white/5 bg-black/40 text-slate-300' : 'border border-slate-200 bg-slate-50 text-slate-500'}`}>
                     <Sparkles size={16} /> Try with demo playground
                   </button>
                 </div>
@@ -349,7 +371,7 @@ export default function Dashboard() {
               <Header title="New Dashboard" subtitle={`${csvFile} • ${csvData.rowCount} rows • ${csvData.columns.length} columns`} />
               <div className="glass rounded-xl p-4 mb-4">
                 <p className="text-xs text-slate-400">
-                  <span className="text-slate-200 font-medium">{csvData.columns.length} Columns detected.</span>
+                  <span className={`font-medium ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>{csvData.columns.length} Columns detected.</span>
                   <span className="hidden sm:inline pl-2">
                     {csvData.columns.slice(0, 6).join(', ')}{csvData.columns.length > 6 ? ' ...' : ''}
                   </span>
@@ -458,10 +480,10 @@ export default function Dashboard() {
 
               {/* Action Buttons (SQL / Description) */}
               <div className="flex gap-3 mb-6">
-                <button onClick={() => setResultTab('sql')} className={`text-xs px-4 py-2 rounded-lg transition-all font-medium border ${resultTab === 'sql' ? 'bg-primary/20 text-indigo-300 border-primary/30' : 'glass text-slate-400 hover:text-slate-200 border-white/5 hover:border-white/10'}`}>
+                <button onClick={() => setResultTab('sql')} className={`text-xs px-4 py-2 rounded-lg transition-all font-medium border ${resultTab === 'sql' ? `bg-primary/20 border-primary/30 ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}` : `glass text-slate-400 border-white/5 hover:border-primary/20 ${darkMode ? 'hover:text-slate-200' : 'hover:text-slate-700'}`}`}>
                   How we found the answer
                 </button>
-                <button onClick={() => setResultTab('trend')} className={`text-xs px-4 py-2 rounded-lg transition-all font-medium border ${resultTab === 'trend' ? 'bg-primary/20 text-indigo-300 border-primary/30' : 'glass text-slate-400 hover:text-slate-200 border-white/5 hover:border-white/10'}`}>
+                <button onClick={() => setResultTab('trend')} className={`text-xs px-4 py-2 rounded-lg transition-all font-medium border ${resultTab === 'trend' ? `bg-primary/20 border-primary/30 ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}` : `glass text-slate-400 border-white/5 hover:border-primary/20 ${darkMode ? 'hover:text-slate-200' : 'hover:text-slate-700'}`}`}>
                   What&apos;s happening with your data
                 </button>
               </div>
@@ -483,7 +505,7 @@ export default function Dashboard() {
               {result.kpis?.length > 0 && (
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4 overflow-hidden">
                   {result.kpis.map((kpi, i) => (
-                    <KPICard key={i} {...kpi} trendDirection={kpi.trend_direction} delay={i} />
+                    <KPICard key={i} {...kpi} trendDirection={kpi.trend_direction} delay={i} darkMode={darkMode} />
                   ))}
                 </div>
               )}
@@ -493,7 +515,7 @@ export default function Dashboard() {
                 <div>
                   {/* First chart - full width */}
                   <div style={{marginBottom: '16px'}}>
-                    <ChartCard chart={result.charts[0]} index={0} title={result.charts[0].title} subtitle={result.charts[0].subtitle} reason={result.charts[0].reason}>
+                    <ChartCard chart={result.charts[0]} index={0} title={result.charts[0].title} subtitle={result.charts[0].subtitle} reason={result.charts[0].reason} darkMode={darkMode}>
                       <div style={{ height: 400 }}>
                         <DynamicChart type={result.charts[0].type} data={result.charts[0].data} xKey={result.charts[0].xKey} yKeys={result.charts[0].yKeys} plan={plan} />
                       </div>
@@ -504,7 +526,7 @@ export default function Dashboard() {
                   {result.charts.length > 1 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       {result.charts.slice(1).map((chart, i) => (
-                        <ChartCard key={i+1} chart={chart} index={i+1} title={chart.title} subtitle={chart.subtitle} reason={chart.reason}>
+                        <ChartCard key={i+1} chart={chart} index={i+1} title={chart.title} subtitle={chart.subtitle} reason={chart.reason} darkMode={darkMode}>
                           <div style={{ height: 300 }}>
                             <DynamicChart type={chart.type} data={chart.data} xKey={chart.xKey} yKeys={chart.yKeys} plan={plan} />
                           </div>
@@ -543,15 +565,15 @@ export default function Dashboard() {
         ${darkMode ? 'bg-[#08080c] border-white/5' : 'bg-white border-slate-200'}`}>
         {/* Drag handle (mobile only) */}
         <div className="md:hidden flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 rounded-full bg-white/20" />
+          <div className={`w-10 h-1 rounded-full ${darkMode ? 'bg-white/20' : 'bg-slate-300'}`} />
         </div>
-        <div className="flex border-b border-white/5 items-center p-4">
-          <button className="md:hidden text-slate-400 hover:text-white px-2 mr-2 border-r border-white/5" onClick={() => setIsRightPanelOpen(false)} aria-label="Close chat panel">✕</button>
-          <span className="font-bold text-sm text-slate-200">AI Assistant</span>
+        <div className={`flex border-b items-center p-4 ${darkMode ? 'border-white/5' : 'border-slate-100'}`}>
+          <button className={`md:hidden text-slate-400 px-2 mr-2 border-r transition-colors ${darkMode ? 'hover:text-white border-white/5' : 'hover:text-slate-700 border-slate-100'}`} onClick={() => setIsRightPanelOpen(false)} aria-label="Close chat panel">✕</button>
+          <span className={`font-bold text-sm ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>AI Assistant</span>
         </div>
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto p-4 border-b border-white/5">
-            <AIChat context={(() => {
+          <div className={`flex-1 overflow-y-auto p-4 border-b ${darkMode ? 'border-white/5' : 'border-slate-100'}`}>
+            <AIChat darkMode={darkMode} context={(() => {
               const parts = []
               if (csvData) {
                 parts.push(`CSV Columns: ${csvData.columns.join(', ')}`)
@@ -577,7 +599,7 @@ export default function Dashboard() {
               <div className="space-y-1.5">
                 {csvData.columns.map(col => (
                   <div key={col} className="glass rounded-lg p-2">
-                    <p className="text-[10px] font-medium text-slate-200">{col}</p>
+                    <p className={`text-[10px] font-medium ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>{col}</p>
                     <p className="text-[9px] text-slate-500 truncate">{csvData.data.slice(0, 3).map(r => r[col]).join(', ')}</p>
                   </div>
                 ))}

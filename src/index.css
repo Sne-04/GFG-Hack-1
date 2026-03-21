@@ -125,6 +125,80 @@
   .light-mode .shadow-lg { box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important; }
   .light-mode .shadow-xl { box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important; }
   .light-mode .shadow-2xl { box-shadow: 0 8px 32px rgba(0,0,0,0.08) !important; }
+
+  /* White opacity backgrounds → subtle light surfaces */
+  .light-mode .bg-white\/5 { background-color: rgba(0,0,0,0.04) !important; }
+  .light-mode .bg-white\/10 { background-color: rgba(0,0,0,0.06) !important; }
+  .light-mode .bg-white\/20 { background-color: rgba(0,0,0,0.08) !important; }
+  .light-mode .hover\:bg-white\/5:hover { background-color: rgba(0,0,0,0.04) !important; }
+  .light-mode .hover\:bg-white\/10:hover { background-color: rgba(0,0,0,0.06) !important; }
+
+  /* Dark opacity backgrounds → light surfaces */
+  .light-mode .bg-black\/40 { background-color: rgba(0,0,0,0.04) !important; }
+  .light-mode .bg-black\/20 { background-color: rgba(0,0,0,0.03) !important; }
+  .light-mode .hover\:bg-black\/40:hover { background-color: rgba(0,0,0,0.04) !important; }
+
+  /* Active tab/button text in light mode — make indigo readable */
+  .light-mode .text-indigo-300 { color: #4338ca !important; }
+  .light-mode .text-indigo-400 { color: #4f46e5 !important; }
+
+  /* Text colors that need to stay legible */
+  .light-mode .text-slate-100 { color: #1e293b !important; }
+
+  /* Drag handle pill on mobile bottom sheet */
+  .light-mode .bg-white\/20 { background-color: rgba(0,0,0,0.12) !important; }
+
+  /* Hover:border-white overrides */
+  .light-mode .hover\:border-white\/10:hover { border-color: rgba(0,0,0,0.10) !important; }
+
+  /* Sidebar "No queries yet" and faint text */
+  .light-mode .text-slate-600 { color: #64748b !important; }
+
+  /* Mobile header hamburger icon */
+  .light-mode .text-slate-300 { color: #475569 !important; }
+
+  /* Auth page divider "or continue with" label */
+  .light-mode .bg-\[\#0f1019\] { background: #ffffff !important; }
+  .light-mode .bg-\[\#0f0f19\] { background: #ffffff !important; }
+  .light-mode .bg-\[\#101019\] { background: #ffffff !important; }
+
+  /* Query input placeholder and border */
+  .light-mode .border-white\/5 { border-color: rgba(0,0,0,0.08) !important; }
+  .light-mode .border-white\/10 { border-color: rgba(0,0,0,0.10) !important; }
+
+  /* QueryInput — input text and chip colors */
+  .light-mode input { color: #1e293b !important; }
+  .light-mode input::placeholder { color: #94a3b8 !important; }
+
+  /* Glass panel in light mode — ensure white bg */
+  .light-mode .glass {
+    background: rgba(255,255,255,0.95) !important;
+    border-color: rgba(0,0,0,0.08) !important;
+  }
+
+  /* Help icon in QueryInput hover */
+  .light-mode .hover\:text-slate-300:hover { color: #475569 !important; }
+
+  /* Chips / suggestion pills in light mode */
+  .light-mode [style*="rgba(99,102,241,0.1)"] {
+    background: rgba(99,102,241,0.08) !important;
+    color: #4338ca !important;
+  }
+
+  /* Error state text */
+  .light-mode .text-red-300 { color: #b91c1c !important; }
+
+  /* "Ready" status dot stays green */
+  .light-mode .bg-emerald-400 { background-color: #10b981 !important; }
+
+  /* Header title on mobile */
+  .light-mode .font-bold.text-sm { color: #1e293b; }
+
+  /* InsightBanner and anomaly badges */
+  .light-mode .bg-primary\/10 { background: rgba(99,102,241,0.07) !important; }
+
+  /* Sidebar section labels */
+  .light-mode .text-slate-500 { color: #6b7280 !important; }
 }
 
 @layer components {
