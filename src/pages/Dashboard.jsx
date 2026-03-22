@@ -17,6 +17,7 @@ import UserMenu from '../components/UserMenu'
 import OnboardingTour from '../components/OnboardingTour'
 import { useAuth } from '../contexts/AuthContext'
 import { parseCSV, getSchema, getSampleRows, getCategoricalColumns } from '../utils/csvParser'
+import { parseXLSX } from '../utils/xlsxParser'
 import { queryOpenAI } from '../utils/openaiApi'
 import { buildPreComputedContext } from '../utils/dataEngine'
 import { validateAndFixResponse } from '../utils/responseValidator'
@@ -95,7 +96,10 @@ export default function Dashboard() {
 
   const handleUpload = useCallback(async (file) => {
     try {
-      const parsed = await parseCSV(file)
+      const ext = file.name.split('.').pop().toLowerCase()
+      const parsed = (ext === 'xlsx' || ext === 'xls')
+        ? await parseXLSX(file)
+        : await parseCSV(file)
       setCsvData(parsed)
       setCsvFile(file.name)
       setSchema(getSchema(parsed.columns, parsed.data))
@@ -103,7 +107,7 @@ export default function Dashboard() {
       setError(null)
     } catch (e) {
       console.error(e)
-      setError(`Invalid CSV: ${e.message || 'Please try again.'}`)
+      setError(`Invalid file: ${e.message || 'Please try again.'}`)
     }
   }, [])
 
@@ -559,24 +563,24 @@ export default function Dashboard() {
               )}
 
               {/* Charts Grid — Fix 7 Multi-chart Logic */}
-              {result.charts?.length > 0 && (
+              {result.charts?.filter(Boolean).length > 0 && (
                 <div>
                   {/* First chart - full width */}
                   <div style={{marginBottom: '16px'}}>
-                    <ChartCard chart={result.charts[0]} index={0} title={result.charts[0].title} subtitle={result.charts[0].subtitle} reason={result.charts[0].reason} darkMode={darkMode}>
+                    <ChartCard chart={result.charts[0]} index={0} title={result.charts[0]?.title} subtitle={result.charts[0]?.subtitle} reason={result.charts[0]?.reason} darkMode={darkMode}>
                       <div style={{ height: 400 }}>
-                        <DynamicChart type={result.charts[0].type} data={result.charts[0].data} xKey={result.charts[0].xKey} yKeys={result.charts[0].yKeys} plan={plan} />
+                        <DynamicChart type={result.charts[0]?.type} data={result.charts[0]?.data} xKey={result.charts[0]?.xKey} yKeys={result.charts[0]?.yKeys} plan={plan} />
                       </div>
                     </ChartCard>
                   </div>
-                  
+
                   {/* Remaining charts - 2 column grid */}
-                  {result.charts.length > 1 && (
+                  {result.charts.filter(Boolean).length > 1 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      {result.charts.slice(1).map((chart, i) => (
-                        <ChartCard key={i+1} chart={chart} index={i+1} title={chart.title} subtitle={chart.subtitle} reason={chart.reason} darkMode={darkMode}>
+                      {result.charts.filter(Boolean).slice(1).map((chart, i) => (
+                        <ChartCard key={i+1} chart={chart} index={i+1} title={chart?.title} subtitle={chart?.subtitle} reason={chart?.reason} darkMode={darkMode}>
                           <div style={{ height: 300 }}>
-                            <DynamicChart type={chart.type} data={chart.data} xKey={chart.xKey} yKeys={chart.yKeys} plan={plan} />
+                            <DynamicChart type={chart?.type} data={chart?.data} xKey={chart?.xKey} yKeys={chart?.yKeys} plan={plan} />
                           </div>
                         </ChartCard>
                       ))}
