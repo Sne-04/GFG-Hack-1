@@ -4,7 +4,7 @@ import { Upload, MessageSquare, BarChart3, ChevronDown, ArrowRight, Github, Spar
 import ParticleSphere from '../components/ParticleSphere'
 
 const features = [
-  { icon: Upload, title: 'Upload Your Data', desc: 'Drag & drop any CSV file. We auto-detect schema, columns, and data types instantly.', color: 'from-indigo-500 to-violet-600' },
+  { icon: Upload, title: 'Upload Your Data', desc: 'Drag & drop any CSV or Excel file. We auto-detect schema, columns, and data types instantly.', color: 'from-indigo-500 to-violet-600' },
   { icon: MessageSquare, title: 'Ask in Plain English', desc: 'No SQL, no code needed. Just type your question and get answers from your data.', color: 'from-cyan-500 to-blue-600' },
   { icon: BarChart3, title: 'Instant Visual Insights', desc: 'Beautiful charts, KPIs, and advanced analysis generated in seconds.', color: 'from-emerald-500 to-teal-600' }
 ]
@@ -96,7 +96,7 @@ export default function LandingPage() {
                 Explore Features
               </button>
             </div>
-            <p style={{ color: '#94a3b8', opacity: 1, fontSize: '0.85rem' }}>No SQL needed • Upload any CSV • Advanced Analysis</p>
+            <p style={{ color: '#94a3b8', opacity: 1, fontSize: '0.85rem' }}>No SQL needed • Upload CSV or Excel • Advanced Analysis</p>
           </motion.div>
         </div>
         <motion.div animate={{ y: [0, 10, 0] }} transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }} className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">

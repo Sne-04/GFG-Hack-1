@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Database, Plus, FileSpreadsheet, ChevronRight, AlertTriangle, Code, TrendingUp, Download, X, Sparkles, Save, Home, Sun, Moon, Lock, CheckCircle } from 'lucide-react'
+import { Database, Plus, FileSpreadsheet, ChevronRight, AlertTriangle, Code, TrendingUp, Download, X, Sparkles, Save, Home, Sun, Moon, Lock, CheckCircle, Table2, Code2 } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
 import ParticleBackground from '../components/ParticleBackground'
 import CSVUpload from '../components/CSVUpload'
@@ -15,6 +15,8 @@ import Header from '../components/Header'
 import AIChat from '../components/AIChat'
 import UserMenu from '../components/UserMenu'
 import OnboardingTour from '../components/OnboardingTour'
+import GoogleSheetsImport from '../components/GoogleSheetsImport'
+import EmbedCode from '../components/EmbedCode'
 import { useAuth } from '../contexts/AuthContext'
 import { parseCSV, getSchema, getSampleRows, getCategoricalColumns } from '../utils/csvParser'
 import { parseXLSX } from '../utils/xlsxParser'
@@ -42,6 +44,8 @@ export default function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [savedDashboardId, setSavedDashboardId] = useState(null)
+  const [showEmbed, setShowEmbed] = useState(false)
   const contentRef = useRef(null)
   const outputRef = useRef(null)
 
@@ -107,7 +111,13 @@ export default function Dashboard() {
       setError(null)
     } catch (e) {
       console.error(e)
-      setError(`Invalid file: ${e.message || 'Please try again.'}`)
+      // Browser FileReader security error — file reference revoked after drag/select
+      const isReadError = e?.message?.toLowerCase().includes('could not be read') ||
+        e?.message?.toLowerCase().includes('permission') ||
+        e?.name === 'NotReadableError'
+      setError(isReadError
+        ? 'Could not read the file. Try dragging it again or use the file picker to browse.'
+        : `Could not parse file: ${e.message || 'Please try again.'}`)
     }
   }, [])
 
@@ -130,10 +140,33 @@ export default function Dashboard() {
     setSchema(null)
     setActiveFilters({})
     setError(null)
+    setSaved(false)
+    setSavedDashboardId(null)
   }, [])
 
+  const downloadCSV = useCallback(() => {
+    if (!csvData) return
+    const headers = csvData.columns.join(',')
+    const rows = csvData.data.map(row =>
+      csvData.columns.map(col => {
+        const val = row[col] ?? ''
+        // Quote values that contain comma, newline, or double-quote
+        return typeof val === 'string' && (val.includes(',') || val.includes('\n') || val.includes('"'))
+          ? `"${val.replace(/"/g, '""')}"`
+          : String(val)
+      }).join(',')
+    )
+    const blob = new Blob([[headers, ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = csvFile ? csvFile.replace(/\.(xlsx?|csv)$/i, '') + '_export.csv' : 'datamind_export.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  }, [csvData, csvFile])
+
   const handleQuery = useCallback(async (query, overrideFilters = null) => {
-    if (!csvData) { setError('Please upload a CSV file first'); return }
+    if (!csvData) { setError('Please upload a CSV or Excel file first'); return }
 
     // Check quota before querying
     if (user && supabaseEnabled) {
@@ -147,6 +180,9 @@ export default function Dashboard() {
     setLoading(true)
     setError(null)
     setResult(null)
+    setSaved(false)
+    setSavedDashboardId(null)
+    setShowEmbed(false)
     setRecentQueries(p => [query, ...p.filter(q => q !== query)].slice(0, 20))
 
     // Append active filters to query
@@ -347,11 +383,17 @@ export default function Dashboard() {
                     <X size={12} />
                   </button>
                 </div>
-                <p className="text-slate-500 mt-1">{csvData?.rowCount} rows</p>
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-slate-500">{csvData?.rowCount} rows</p>
+                  <button onClick={downloadCSV} title="Download as CSV" className="text-slate-500 hover:text-primary transition-colors p-0.5" >
+                    <Table2 size={10} />
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="space-y-2">
                 <CSVUpload onUpload={handleUpload} compact />
+                <GoogleSheetsImport onImport={handleUpload} darkMode={darkMode} />
                 <button onClick={loadDemoData} className="w-full text-center border border-primary/30 text-primary hover:bg-primary/10 rounded-lg py-1.5 text-[9px] font-medium transition-colors">
                   Try with demo data →
                 </button>
@@ -470,8 +512,9 @@ export default function Dashboard() {
                           alert(quota.reason)
                           return
                         }
-                        await saveDashboard(user.id, csvFile, schema, result, result.query)
+                        const saved_data = await saveDashboard(user.id, csvFile, schema, result, result.query)
                         setSaved(true)
+                        if (saved_data?.id) setSavedDashboardId(saved_data.id)
                       } catch (e) {
                         alert(e?.message || 'Failed to save dashboard')
                         console.error(e)
@@ -527,6 +570,16 @@ export default function Dashboard() {
                       <Download size={14}/>PPT
                     </button>
                   )}
+                  {/* CSV data export — all plans */}
+                  {csvData && (
+                    <button onClick={downloadCSV} title="Download raw data as CSV" className="glass rounded-lg px-4 py-2 text-xs font-medium flex items-center gap-2 hover:border-emerald-500/30 transition-all ml-2">
+                      <Table2 size={14}/>CSV
+                    </button>
+                  )}
+                  {/* Embed code — all plans */}
+                  <button onClick={() => setShowEmbed(true)} title="Get embed code" className="glass rounded-lg px-4 py-2 text-xs font-medium flex items-center gap-2 hover:border-primary/30 transition-all ml-2">
+                    <Code2 size={14}/>Embed
+                  </button>
                 </div>
               </div>
 
@@ -605,6 +658,15 @@ export default function Dashboard() {
           )}
         </div>
       </main>
+
+      {/* Embed Code Modal */}
+      {showEmbed && (
+        <EmbedCode
+          dashboardId={savedDashboardId}
+          darkMode={darkMode}
+          onClose={() => setShowEmbed(false)}
+        />
+      )}
 
       {/* Mobile Right Overlay */}
       {isRightPanelOpen && <div className="fixed inset-0 bg-black/70 z-40 md:hidden" onClick={() => setIsRightPanelOpen(false)} />}

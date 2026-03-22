@@ -124,7 +124,7 @@ export default function SharedDashboard() {
           {/* CTA */}
           <div className="mt-10 glass rounded-2xl p-6 border border-primary/10 text-center">
             <p className="text-sm font-semibold text-white mb-1">Want to analyse your own data?</p>
-            <p className="text-xs text-slate-400 mb-4">Upload any CSV and get AI-powered charts & insights in seconds — free.</p>
+            <p className="text-xs text-slate-400 mb-4">Upload any CSV or Excel file and get AI-powered charts & insights in seconds — free.</p>
             <Link to="/signup" className="glow-btn rounded-xl px-6 py-2.5 text-sm font-semibold text-white inline-block">
               Try DataMind AI free →
             </Link>
