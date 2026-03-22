@@ -1,4 +1,4 @@
-import { ResponsiveContainer, LineChart, BarChart, AreaChart, PieChart, ComposedChart, ScatterChart, Line, Bar, Area, Pie, Scatter, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ZAxis } from 'recharts'
+import { ResponsiveContainer, LineChart, BarChart, AreaChart, PieChart, ComposedChart, ScatterChart, FunnelChart, Funnel, RadialBarChart, RadialBar, Treemap, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Line, Bar, Area, Pie, Scatter, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ZAxis, LabelList } from 'recharts'
 import { CustomTooltip, getChartColor } from '../utils/chartHelpers.jsx'
 
 const COLORS = [
@@ -22,7 +22,7 @@ function heatColor(value, min, max) {
   return `rgb(${r}, ${g}, ${b})`
 }
 
-const PRO_CHARTS = ['heatmap', 'scatter']
+const PRO_CHARTS = ['heatmap', 'scatter', 'funnel', 'gauge', 'treemap', 'waterfall', 'radar']
 
 export default function DynamicChart({ type, data, xKey, yKeys, plan = 'free' }) {
   if (!data?.length || !yKeys?.length) return <p className="text-slate-500 text-xs text-center pt-20">No data</p>
@@ -39,7 +39,7 @@ export default function DynamicChart({ type, data, xKey, yKeys, plan = 'free' })
             </svg>
           </div>
           <p className="text-sm font-semibold text-white mb-1">Pro Feature</p>
-          <p className="text-[11px] text-slate-400 mb-3">{type === 'heatmap' ? 'Heatmap' : 'Scatter'} charts require a Pro plan</p>
+          <p className="text-[11px] text-slate-400 mb-3">{{ heatmap: 'Heatmap', scatter: 'Scatter', funnel: 'Funnel', gauge: 'Gauge', treemap: 'Treemap', waterfall: 'Waterfall', radar: 'Radar' }[type] || 'This'} chart requires a Pro plan</p>
           <a href="/pricing" className="inline-block px-4 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary/80 transition-colors">
             Upgrade to Pro →
           </a>
@@ -77,6 +77,94 @@ export default function DynamicChart({ type, data, xKey, yKeys, plan = 'free' })
   const renderAreas = () => yKeys.map((yk, i) => (
     <Area key={yk.key} type="monotone" dataKey={yk.key} name={yk.name || yk.key} stroke={yk.color || getChartColor(i)} fill={yk.color || getChartColor(i)} fillOpacity={0.15} strokeWidth={2} />
   ))
+
+  // === FUNNEL ===
+  if (type === 'funnel') {
+    const dk = yKeys[0]?.key || 'value'
+    const funnelData = data.map((d, i) => ({ ...d, fill: COLORS[i % COLORS.length] }))
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <FunnelChart>
+          {tt}
+          <Funnel dataKey={dk} data={funnelData} isAnimationActive>
+            <LabelList position="right" fill="#94a3b8" stroke="none" fontSize={10} dataKey={xKey} />
+          </Funnel>
+        </FunnelChart>
+      </ResponsiveContainer>
+    )
+  }
+
+  // === GAUGE (radial bar) ===
+  if (type === 'gauge') {
+    const dk = yKeys[0]?.key || 'value'
+    const gaugeData = data.map((d, i) => ({ ...d, fill: COLORS[i % COLORS.length] }))
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <RadialBarChart cx="50%" cy="50%" innerRadius="20%" outerRadius="90%" data={gaugeData} startAngle={180} endAngle={0}>
+          <RadialBar minAngle={15} background clockWise dataKey={dk}>
+            {gaugeData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+          </RadialBar>
+          {tt}
+          <Legend wrapperStyle={{ fontSize: 10, color: '#94a3b8' }} iconSize={8} />
+        </RadialBarChart>
+      </ResponsiveContainer>
+    )
+  }
+
+  // === TREEMAP ===
+  if (type === 'treemap') {
+    const dk = yKeys[0]?.key || 'value'
+    const treemapData = data.map((d, i) => ({ name: d[xKey], size: Number(d[dk]) || 0, fill: COLORS[i % COLORS.length] }))
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <Treemap data={treemapData} dataKey="size" aspectRatio={4 / 3} stroke="rgba(255,255,255,0.06)">
+          {treemapData.map((entry, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+        </Treemap>
+      </ResponsiveContainer>
+    )
+  }
+
+  // === WATERFALL (cumulative bar with invisible spacer) ===
+  if (type === 'waterfall') {
+    const dk = yKeys[0]?.key || 'value'
+    let cumulative = 0
+    const waterfallData = data.map(d => {
+      const val = Number(d[dk]) || 0
+      const base = cumulative
+      cumulative += val
+      return { ...d, _base: base, _val: Math.abs(val), _pos: val >= 0 }
+    })
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={waterfallData}>{grid}{xA}{yA}{tt}
+          <Bar dataKey="_base" stackId="wf" fill="transparent" stroke="none" />
+          <Bar dataKey="_val" stackId="wf" radius={[4, 4, 0, 0]}>
+            {waterfallData.map((entry, i) => <Cell key={i} fill={entry._pos ? COLORS[0] : '#f43f5e'} />)}
+          </Bar>
+          <Legend wrapperStyle={{ fontSize: 10 }} payload={[{ value: 'Increase', type: 'rect', color: COLORS[0] }, { value: 'Decrease', type: 'rect', color: '#f43f5e' }]} />
+        </BarChart>
+      </ResponsiveContainer>
+    )
+  }
+
+  // === RADAR ===
+  if (type === 'radar') {
+    const dk = yKeys[0]?.key || 'value'
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
+          <PolarGrid stroke="rgba(255,255,255,0.07)" />
+          <PolarAngleAxis dataKey={xKey} tick={{ fill: '#64748b', fontSize: 10 }} />
+          <PolarRadiusAxis tick={{ fill: '#475569', fontSize: 9 }} />
+          {yKeys.map((yk, i) => (
+            <Radar key={yk.key} name={yk.name || yk.key} dataKey={yk.key} stroke={yk.color || getChartColor(i)} fill={yk.color || getChartColor(i)} fillOpacity={0.2} />
+          ))}
+          {tt}
+          <Legend wrapperStyle={{ fontSize: 10 }} />
+        </RadarChart>
+      </ResponsiveContainer>
+    )
+  }
 
   // === HEATMAP (custom CSS grid) ===
   if (type === 'heatmap') {

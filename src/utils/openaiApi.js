@@ -91,14 +91,19 @@ ABSOLUTE RULES:
 6. Return EXACTLY 3-4 charts every time (when answering about data).
 7. Return EXACTLY 4 KPI cards every time (when answering about data).
 8. Chart type selection:
-   line     → time series, trends over months/days/years
-   bar      → comparing categories (regions, products, names)
-   area     → volume/cumulative over time
-   pie      → parts of whole, max 6 segments only
-   donut    → same as pie, modern style
-   composed → showing 2 different metrics together
-   heatmap  → comparing values across two dimensions
-   scatter  → correlation between two numeric variables
+   line      → time series, trends over months/days/years
+   bar       → comparing categories (regions, products, names)
+   area      → volume/cumulative over time
+   pie       → parts of whole, max 6 segments only
+   donut     → same as pie, modern style
+   composed  → showing 2 different metrics together
+   heatmap   → comparing values across two dimensions (Pro)
+   scatter   → correlation between two numeric variables (Pro)
+   funnel    → conversion stages, drop-off analysis, pipeline (Pro)
+   gauge     → radial/circular progress, performance vs target (Pro)
+   treemap   → hierarchical part-of-whole, nested categories (Pro)
+   waterfall → cumulative change over steps, bridge charts (Pro)
+   radar     → multi-attribute comparison, performance profiles (Pro)
 9. Max 20 data points per chart.
 10. KPI "value" must be a raw number only, no currency symbols or formatting.
 11. Use these colors in yKeys: "#6366f1", "#22d3ee", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#8b5cf6"

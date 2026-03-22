@@ -9,8 +9,8 @@ export default function CSVUpload({ onUpload, compact = false }) {
   const handleFile = useCallback((file) => {
     if (!file) return
     const ext = file.name.split('.').pop().toLowerCase()
-    if (ext !== 'csv') {
-      alert('Please upload a .csv file')
+    if (!['csv', 'xlsx', 'xls'].includes(ext)) {
+      alert('Please upload a .csv, .xlsx, or .xls file')
       return
     }
     const fileSizeMB = file.size / (1024 * 1024)
@@ -36,8 +36,8 @@ export default function CSVUpload({ onUpload, compact = false }) {
         className="block border border-dashed border-white/10 rounded-lg p-3 text-center cursor-pointer hover:border-primary/40 transition-all group"
       >
         <Upload size={16} className="mx-auto mb-1 text-slate-500 group-hover:text-primary transition-colors"/>
-        <span className="text-[10px] text-slate-500">Upload CSV</span>
-        <input type="file" accept=".csv" className="hidden" onChange={e => handleFile(e.target.files?.[0])}/>
+        <span className="text-[10px] text-slate-500">CSV / Excel</span>
+        <input type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={e => handleFile(e.target.files?.[0])}/>
       </label>
     )
   }
@@ -50,13 +50,13 @@ export default function CSVUpload({ onUpload, compact = false }) {
     >
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"/>
       <Upload size={40} className="mx-auto mb-3 text-slate-500 group-hover:text-primary transition-colors animate-float"/>
-      <h3 className="text-sm font-medium text-slate-300 mb-1">Drop your CSV file here</h3>
-      <span className="text-xs text-slate-500">or click to browse</span>
+      <h3 className="text-sm font-medium text-slate-300 mb-1">Drop your CSV or Excel file here</h3>
+      <span className="text-xs text-slate-500">or click to browse • .csv, .xlsx, .xls</span>
       <p className="text-[10px] text-slate-600 mt-2">
         Max size: {plan === 'enterprise' ? '500MB' : plan === 'pro' ? '100MB' : '10MB'}
         {plan === 'free' && <a href="/pricing" className="text-primary ml-1 hover:underline">Upgrade for larger files →</a>}
       </p>
-      <input type="file" accept=".csv" className="hidden" onChange={e => handleFile(e.target.files?.[0])}/>
+      <input type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={e => handleFile(e.target.files?.[0])}/>
     </label>
   )
 }

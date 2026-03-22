@@ -17,6 +17,7 @@ import UserMenu from '../components/UserMenu'
 import OnboardingTour from '../components/OnboardingTour'
 import { useAuth } from '../contexts/AuthContext'
 import { parseCSV, getSchema, getSampleRows, getCategoricalColumns } from '../utils/csvParser'
+import { parseXLSX } from '../utils/xlsxParser'
 import { queryOpenAI } from '../utils/openaiApi'
 import { buildPreComputedContext } from '../utils/dataEngine'
 import { validateAndFixResponse } from '../utils/responseValidator'
@@ -95,7 +96,10 @@ export default function Dashboard() {
 
   const handleUpload = useCallback(async (file) => {
     try {
-      const parsed = await parseCSV(file)
+      const ext = file.name.split('.').pop().toLowerCase()
+      const parsed = (ext === 'xlsx' || ext === 'xls')
+        ? await parseXLSX(file)
+        : await parseCSV(file)
       setCsvData(parsed)
       setCsvFile(file.name)
       setSchema(getSchema(parsed.columns, parsed.data))
@@ -103,7 +107,7 @@ export default function Dashboard() {
       setError(null)
     } catch (e) {
       console.error(e)
-      setError(`Invalid CSV: ${e.message || 'Please try again.'}`)
+      setError(`Invalid file: ${e.message || 'Please try again.'}`)
     }
   }, [])
 

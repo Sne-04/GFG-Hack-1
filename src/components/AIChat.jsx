@@ -30,10 +30,13 @@ export default function AIChat({ context, darkMode = true }) {
     setMessages(p => [...p, { role: 'user', content: userMsg }])
     setLoading(true)
     try {
-      const history = messages.filter(m => m.role !== 'system').map(m => ({
-        role: m.role === 'assistant' ? 'assistant' : 'user',
-        content: m.content
-      }))
+      const history = messages
+        .filter(m => m.role !== 'system')
+        .slice(-10)
+        .map(m => ({
+          role: m.role === 'assistant' ? 'assistant' : 'user',
+          content: m.content
+        }))
       const reply = await chatWithOpenAI(userMsg, context, history)
       setMessages(p => [...p, { role: 'assistant', content: reply }])
     } catch (err) {
