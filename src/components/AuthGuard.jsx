@@ -7,6 +7,9 @@ export default function AuthGuard({ children }) {
   // If Supabase is not configured, allow access (dev/demo mode)
   if (!supabaseEnabled) return children
 
+  // Dev-only bypass: set localStorage key to skip auth in local development
+  if (import.meta.env.DEV && localStorage.getItem('datamind-dev-bypass') === 'true') return children
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
