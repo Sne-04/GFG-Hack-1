@@ -107,7 +107,13 @@ export default function Dashboard() {
       setError(null)
     } catch (e) {
       console.error(e)
-      setError(`Invalid file: ${e.message || 'Please try again.'}`)
+      // Browser FileReader security error — file reference revoked after drag/select
+      const isReadError = e?.message?.toLowerCase().includes('could not be read') ||
+        e?.message?.toLowerCase().includes('permission') ||
+        e?.name === 'NotReadableError'
+      setError(isReadError
+        ? 'Could not read the file. Try dragging it again or use the file picker to browse.'
+        : `Could not parse file: ${e.message || 'Please try again.'}`)
     }
   }, [])
 
@@ -133,7 +139,7 @@ export default function Dashboard() {
   }, [])
 
   const handleQuery = useCallback(async (query, overrideFilters = null) => {
-    if (!csvData) { setError('Please upload a CSV file first'); return }
+    if (!csvData) { setError('Please upload a CSV or Excel file first'); return }
 
     // Check quota before querying
     if (user && supabaseEnabled) {
