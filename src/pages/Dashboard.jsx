@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Database, Plus, FileSpreadsheet, ChevronRight, AlertTriangle, Code, TrendingUp, Download, X, Sparkles, Save, Home, Sun, Moon, Lock, CheckCircle, Table2, Code2 } from 'lucide-react'
+import { Database, Plus, FileSpreadsheet, ChevronRight, AlertTriangle, Code, TrendingUp, Download, X, Sparkles, Save, Home, Sun, Moon, Lock, CheckCircle, Table2, Code2, Clock } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
 import ParticleBackground from '../components/ParticleBackground'
 import CSVUpload from '../components/CSVUpload'
@@ -17,6 +17,7 @@ import UserMenu from '../components/UserMenu'
 import OnboardingTour from '../components/OnboardingTour'
 import GoogleSheetsImport from '../components/GoogleSheetsImport'
 import EmbedCode from '../components/EmbedCode'
+import ScheduleReport from '../components/ScheduleReport'
 import { useAuth } from '../contexts/AuthContext'
 import { parseCSV, getSchema, getSampleRows, getCategoricalColumns } from '../utils/csvParser'
 import { parseXLSX } from '../utils/xlsxParser'
@@ -46,6 +47,7 @@ export default function Dashboard() {
   const [saved, setSaved] = useState(false)
   const [savedDashboardId, setSavedDashboardId] = useState(null)
   const [showEmbed, setShowEmbed] = useState(false)
+  const [showSchedule, setShowSchedule] = useState(false)
   const contentRef = useRef(null)
   const outputRef = useRef(null)
 
@@ -580,6 +582,12 @@ export default function Dashboard() {
                   <button onClick={() => setShowEmbed(true)} title="Get embed code" className="glass rounded-lg px-4 py-2 text-xs font-medium flex items-center gap-2 hover:border-primary/30 transition-all ml-2">
                     <Code2 size={14}/>Embed
                   </button>
+                  {/* Schedule report — saved dashboards only */}
+                  {savedDashboardId && (
+                    <button onClick={() => setShowSchedule(true)} title="Schedule email report" className="glass rounded-lg px-4 py-2 text-xs font-medium flex items-center gap-2 hover:border-primary/30 transition-all ml-2">
+                      <Clock size={14}/>Schedule
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -665,6 +673,16 @@ export default function Dashboard() {
           dashboardId={savedDashboardId}
           darkMode={darkMode}
           onClose={() => setShowEmbed(false)}
+        />
+      )}
+
+      {/* Schedule Report Modal */}
+      {showSchedule && savedDashboardId && (
+        <ScheduleReport
+          dashboardId={savedDashboardId}
+          darkMode={darkMode}
+          userEmail={user?.email}
+          onClose={() => setShowSchedule(false)}
         />
       )}
 

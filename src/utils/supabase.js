@@ -306,3 +306,36 @@ export async function getDailyUsage(userId) {
     .single()
   return data?.query_count || 0
 }
+
+// ── Workspace helpers (client-side reads; mutations go through API routes) ──
+
+export async function getWorkspaces() {
+  if (!supabase) return []
+  const session = await supabase.auth.getSession()
+  const token = session?.data?.session?.access_token
+  if (!token) return []
+  try {
+    const res = await fetch('/api/workspaces', { headers: { Authorization: `Bearer ${token}` } })
+    const json = await res.json()
+    return json.workspaces || []
+  } catch {
+    return []
+  }
+}
+
+// ── Scheduled report helpers (client-side reads; mutations go through API routes) ──
+
+export async function getScheduledReports(dashboardId) {
+  if (!supabase) return []
+  const session = await supabase.auth.getSession()
+  const token = session?.data?.session?.access_token
+  if (!token) return []
+  try {
+    const url = dashboardId ? `/api/schedule-report?dashboard_id=${dashboardId}` : '/api/schedule-report'
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+    const json = await res.json()
+    return json.schedules || []
+  } catch {
+    return []
+  }
+}
