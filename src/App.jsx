@@ -15,6 +15,7 @@ const Pricing = lazy(() => import('./pages/Pricing'))
 const Dashboards = lazy(() => import('./pages/Dashboards'))
 const SharedDashboard = lazy(() => import('./pages/SharedDashboard'))
 const AuthCallback = lazy(() => import('./pages/AuthCallback'))
+const Team = lazy(() => import('./pages/Team'))
 
 function LoadingFallback() {
   return (
@@ -61,6 +62,11 @@ export default function App() {
             <Route path="/dashboards" element={
               <AnimatedRoute>
                 <AuthGuard><Dashboards /></AuthGuard>
+              </AnimatedRoute>
+            } />
+            <Route path="/team" element={
+              <AnimatedRoute>
+                <AuthGuard><Team /></AuthGuard>
               </AnimatedRoute>
             } />
             <Route path="/shared/:token" element={<AnimatedRoute><SharedDashboard /></AnimatedRoute>} />

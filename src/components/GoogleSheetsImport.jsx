@@ -15,6 +15,12 @@ export default function GoogleSheetsImport({ onImport, darkMode }) {
     return match ? match[1] : null
   }
 
+  const extractGid = (raw) => {
+    // gid appears as ?gid=123, &gid=123, or #gid=123
+    const match = raw.match(/[?&#]gid=(\d+)/)
+    return match ? match[1] : '0'
+  }
+
   const handleImport = async () => {
     setError(null)
     const sheetId = extractSheetId(url.trim())
@@ -22,9 +28,10 @@ export default function GoogleSheetsImport({ onImport, darkMode }) {
       setError('Invalid URL. Paste the full Google Sheets share link.')
       return
     }
+    const gid = extractGid(url.trim())
     setLoading(true)
     try {
-      const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`
+      const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`
       const response = await fetch(csvUrl)
       if (!response.ok) {
         throw new Error(
