@@ -25,7 +25,7 @@ export default function SharedDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#08080c] flex items-center justify-center">
+      <div className="min-h-screen bg-black/20 backdrop-blur-md flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
       </div>
     )
@@ -33,7 +33,7 @@ export default function SharedDashboard() {
 
   if (notFound) {
     return (
-      <div className="min-h-screen bg-[#08080c] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-black/20 backdrop-blur-md flex items-center justify-center p-6">
         <div className="text-center">
           <AlertTriangle size={40} className="text-slate-600 mx-auto mb-4" />
           <h1 className="text-lg font-bold text-white mb-2">Dashboard not found</h1>
@@ -48,7 +48,7 @@ export default function SharedDashboard() {
   const query = dashboard.query_text
 
   return (
-    <div className="min-h-screen bg-[#08080c] text-slate-200">
+    <div className="min-h-screen bg-black/20 backdrop-blur-md text-slate-200">
       {/* Header */}
       <div className="border-b border-white/5 px-6 py-4 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">

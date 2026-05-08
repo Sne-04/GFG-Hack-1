@@ -1,229 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #08080c; color: #f1f5f9; font-family: 'Inter', sans-serif; transition: background 0.3s, color 0.3s; }
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: 4px; }
+
+  body {
+    background-color: #fafbfc;
+    color: #1e293b;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
   ::-webkit-scrollbar-track { background: transparent; }
 
-  /* ═══════════════════════════════════════════
-     LIGHT MODE — comprehensive overrides
-     ═══════════════════════════════════════════ */
-  .light-mode body,
-  .light-mode { background: #f4f6f9; color: #1e293b; }
-
-  /* Glass panels → white with subtle shadow */
-  .light-mode .glass {
-    background: rgba(255, 255, 255, 0.92) !important;
-    border-color: rgba(0,0,0,0.08) !important;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  ::selection {
+    background: rgba(99, 102, 241, 0.15);
+    color: #1e293b;
   }
-  .light-mode .glass-hover:hover {
-    box-shadow: 0 4px 20px rgba(99,102,241,0.15);
-    border-color: rgba(99,102,241,0.3) !important;
-  }
-
-  /* Dark BGs → white/light gray */
-  .light-mode .bg-\[\#08080c\],
-  .light-mode .bg-\[\#0a0a0f\] { background: #f4f6f9 !important; }
-  .light-mode .bg-\[\#101018\] { background: #ffffff !important; }
-  .light-mode .bg-\[\#0f0f18\] { background: #f8f9fc !important; }
-  .light-mode .bg-\[\#13141f\] { background: #ffffff !important; }
-  .light-mode .bg-\[\#0c0d14\] { background: #f8fafc !important; }
-  .light-mode .bg-\[\#1a1b26\] { background: #ffffff !important; }
-
-  /* Gradient backgrounds → light */
-  .light-mode .from-\[\#13141f\] { --tw-gradient-from: #ffffff !important; }
-  .light-mode .to-\[\#0c0d14\] { --tw-gradient-to: #f1f5f9 !important; }
-  .light-mode .from-\[\#101018\] { --tw-gradient-from: #ffffff !important; }
-
-  /* Text colors → dark on light */
-  .light-mode .text-slate-200 { color: #1e293b !important; }
-  .light-mode .text-slate-300 { color: #334155 !important; }
-  .light-mode .text-slate-400 { color: #64748b !important; }
-  .light-mode .text-slate-500 { color: #94a3b8 !important; }
-  .light-mode .text-slate-600 { color: #94a3b8 !important; }
-  .light-mode .text-white { color: #0f172a !important; }
-
-  /* But keep white text inside buttons with glow-btn */
-  .light-mode .glow-btn .text-white,
-  .light-mode .glow-btn { color: #ffffff !important; }
-  .light-mode button.glow-btn { color: #ffffff !important; }
-
-  /* KPI gradient text → dark gradient */
-  .light-mode .from-white.to-slate-400,
-  .light-mode .bg-gradient-to-br.from-white { --tw-gradient-from: #0f172a !important; --tw-gradient-to: #475569 !important; }
-
-  /* Borders → subtle gray */
-  .light-mode .border-white\/5,
-  .light-mode .border-white\/10 { border-color: rgba(0,0,0,0.08) !important; }
-  .light-mode .border-white\/20 { border-color: rgba(0,0,0,0.12) !important; }
-
-  /* Input fields */
-  .light-mode input.bg-transparent,
-  .light-mode select { color: #1e293b !important; }
-  .light-mode input::placeholder { color: #94a3b8 !important; }
-
-  /* Code blocks */
-  .light-mode pre.bg-black\/40,
-  .light-mode .bg-black\/40 { background: #f1f5f9 !important; border-color: rgba(0,0,0,0.08) !important; }
-  .light-mode code { color: #6366f1 !important; }
-
-  /* Chart card bg */
-  .light-mode [class*="bg-[#101018]"] { background: #ffffff !important; border-color: rgba(0,0,0,0.06) !important; }
-
-  /* Filter bar */
-  .light-mode select.bg-\[\#1a1b26\] { background: #ffffff !important; border-color: rgba(0,0,0,0.12) !important; color: #334155 !important; }
-  .light-mode option { background: #ffffff !important; color: #334155 !important; }
-
-  /* Overlay */
-  .light-mode .bg-black\/70 { background: rgba(0,0,0,0.3) !important; }
-
-  /* Glow button — keep purple */
-  .light-mode .glow-btn {
-    box-shadow: 0 2px 12px rgba(99,102,241,0.3);
-  }
-  .light-mode .glow-btn:hover {
-    box-shadow: 0 4px 24px rgba(99,102,241,0.4);
-  }
-
-  /* AI Chat bubbles */
-  .light-mode [style*="rgba(255,255,255,0.05)"] { background: #f1f5f9 !important; border-color: rgba(0,0,0,0.08) !important; }
-  .light-mode [style*="rgba(99,102,241,0.2)"] { background: rgba(99,102,241,0.12) !important; }
-
-  /* Primary colors stay the same in light mode */
-  .light-mode .text-primary { color: #4f46e5 !important; }
-  .light-mode .text-secondary { color: #0891b2 !important; }
-  .light-mode .text-emerald-400 { color: #059669 !important; }
-  .light-mode .text-red-400 { color: #dc2626 !important; }
-  .light-mode .text-red-300 { color: #dc2626 !important; }
-
-  /* Scrollbar */
-  .light-mode ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); }
-
-  /* Right panel */
-  .light-mode .bg-\[\#0b0b12\] { background: #ffffff !important; }
-
-  /* Anomaly badges keep their colors */
-  .light-mode .bg-red-500\/10 { background: rgba(239,68,68,0.08) !important; }
-  .light-mode .bg-emerald-500\/10 { background: rgba(16,185,129,0.08) !important; }
-  .light-mode .bg-orange-500\/10 { background: rgba(249,115,22,0.08) !important; }
-
-  /* Primary background tints → lighter */
-  .light-mode .bg-primary\/10 { background: rgba(99,102,241,0.06) !important; }
-  .light-mode .bg-primary\/20 { background: rgba(99,102,241,0.1) !important; }
-  .light-mode .from-primary\/5 { --tw-gradient-from: rgba(99,102,241,0.03) !important; }
-  .light-mode .from-primary\/10 { --tw-gradient-from: rgba(99,102,241,0.05) !important; }
-  .light-mode .from-primary\/20 { --tw-gradient-from: rgba(99,102,241,0.08) !important; }
-
-  /* Shadow adjustments */
-  .light-mode .shadow-lg { box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important; }
-  .light-mode .shadow-xl { box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important; }
-  .light-mode .shadow-2xl { box-shadow: 0 8px 32px rgba(0,0,0,0.08) !important; }
-
-  /* White opacity backgrounds → subtle light surfaces */
-  .light-mode .bg-white\/5 { background-color: rgba(0,0,0,0.04) !important; }
-  .light-mode .bg-white\/10 { background-color: rgba(0,0,0,0.06) !important; }
-  .light-mode .bg-white\/20 { background-color: rgba(0,0,0,0.08) !important; }
-  .light-mode .hover\:bg-white\/5:hover { background-color: rgba(0,0,0,0.04) !important; }
-  .light-mode .hover\:bg-white\/10:hover { background-color: rgba(0,0,0,0.06) !important; }
-
-  /* Dark opacity backgrounds → light surfaces */
-  .light-mode .bg-black\/40 { background-color: rgba(0,0,0,0.04) !important; }
-  .light-mode .bg-black\/20 { background-color: rgba(0,0,0,0.03) !important; }
-  .light-mode .hover\:bg-black\/40:hover { background-color: rgba(0,0,0,0.04) !important; }
-
-  /* Active tab/button text in light mode — make indigo readable */
-  .light-mode .text-indigo-300 { color: #4338ca !important; }
-  .light-mode .text-indigo-400 { color: #4f46e5 !important; }
-
-  /* Text colors that need to stay legible */
-  .light-mode .text-slate-100 { color: #1e293b !important; }
-
-  /* Drag handle pill on mobile bottom sheet */
-  .light-mode .bg-white\/20 { background-color: rgba(0,0,0,0.12) !important; }
-
-  /* Hover:border-white overrides */
-  .light-mode .hover\:border-white\/10:hover { border-color: rgba(0,0,0,0.10) !important; }
-
-  /* Sidebar "No queries yet" and faint text */
-  .light-mode .text-slate-600 { color: #64748b !important; }
-
-  /* Mobile header hamburger icon */
-  .light-mode .text-slate-300 { color: #475569 !important; }
-
-  /* Auth page divider "or continue with" label */
-  .light-mode .bg-\[\#0f1019\] { background: #ffffff !important; }
-  .light-mode .bg-\[\#0f0f19\] { background: #ffffff !important; }
-  .light-mode .bg-\[\#101019\] { background: #ffffff !important; }
-
-  /* Query input placeholder and border */
-  .light-mode .border-white\/5 { border-color: rgba(0,0,0,0.08) !important; }
-  .light-mode .border-white\/10 { border-color: rgba(0,0,0,0.10) !important; }
-
-  /* QueryInput — input text and chip colors */
-  .light-mode input { color: #1e293b !important; }
-  .light-mode input::placeholder { color: #94a3b8 !important; }
-
-  /* Glass panel in light mode — ensure white bg */
-  .light-mode .glass {
-    background: rgba(255,255,255,0.95) !important;
-    border-color: rgba(0,0,0,0.08) !important;
-  }
-
-  /* Help icon in QueryInput hover */
-  .light-mode .hover\:text-slate-300:hover { color: #475569 !important; }
-
-  /* Chips / suggestion pills in light mode */
-  .light-mode [style*="rgba(99,102,241,0.1)"] {
-    background: rgba(99,102,241,0.08) !important;
-    color: #4338ca !important;
-  }
-
-  /* Error state text */
-  .light-mode .text-red-300 { color: #b91c1c !important; }
-
-  /* "Ready" status dot stays green */
-  .light-mode .bg-emerald-400 { background-color: #10b981 !important; }
-
-  /* Header title on mobile */
-  .light-mode .font-bold.text-sm { color: #1e293b; }
-
-  /* InsightBanner and anomaly badges */
-  .light-mode .bg-primary\/10 { background: rgba(99,102,241,0.07) !important; }
-
-  /* Sidebar section labels */
-  .light-mode .text-slate-500 { color: #6b7280 !important; }
 }
 
 @layer components {
+  /* ─── Glass: light frosted panel ─── */
   .glass {
-    background: rgba(18, 18, 26, 0.7);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,0.04);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(0, 0, 0, 0.06);
   }
   .glass-hover:hover {
-    box-shadow: 0 0 25px rgba(99,102,241,0.35);
-    border-color: rgba(99,102,241,0.3);
+    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.12);
+    border-color: rgba(99, 102, 241, 0.25);
   }
-  .glow-text {
-    text-shadow: 0 0 40px rgba(99,102,241,0.8);
-  }
+
+  /* ─── Primary action button ─── */
   .glow-btn {
-    background: linear-gradient(135deg, #6366f1, #4f46e5);
-    box-shadow: 0 0 20px rgba(99,102,241,0.4);
-    transition: all 0.3s ease;
+    background: #18181b;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
+    color: #ffffff;
   }
   .glow-btn:hover {
-    box-shadow: 0 0 40px rgba(99,102,241,0.6);
-    transform: translateY(-2px);
+    background: #09090b;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+    transform: translateY(-1px);
   }
+
+  /* ─── Subtle gradient border on hover ─── */
   .gradient-border {
     position: relative;
   }
@@ -238,6 +67,27 @@
     transition: opacity 0.3s;
   }
   .gradient-border:hover::before { opacity: 1; }
+
+  /* ─── Card base ─── */
+  .card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    transition: all 0.2s ease;
+  }
+  .card:hover {
+    border-color: #c7d2fe;
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.08);
+  }
+
+  /* ─── Float animation ─── */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-6px); }
+  }
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
 }
 
 @keyframes typewriter { from { width: 0 } to { width: 100% } }

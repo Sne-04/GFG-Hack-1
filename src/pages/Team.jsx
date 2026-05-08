@@ -2,14 +2,13 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Users, Plus, Mail, Trash2, Crown, Shield, Eye, Send, AlertCircle, Check, ArrowLeft } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { supabase } from '../utils/supabase'
 import Header from '../components/Header'
 
 const ROLE_ICONS = { admin: Crown, editor: Shield, viewer: Eye }
 const ROLE_COLORS = { admin: 'text-amber-400', editor: 'text-blue-400', viewer: 'text-slate-400' }
 
 export default function Team() {
-  const { user, profile } = useAuth()
+  const { user, profile, getToken } = useAuth()
   const navigate = useNavigate()
 
   const [workspaces, setWorkspaces]   = useState([])
@@ -32,11 +31,6 @@ export default function Team() {
   const canUseTeams = plan === 'pro' || plan === 'enterprise'
 
   useEffect(() => { loadWorkspaces() }, [])
-
-  async function getToken() {
-    const s = await supabase.auth.getSession()
-    return s?.data?.session?.access_token
-  }
 
   async function loadWorkspaces() {
     setLoading(true)
@@ -128,7 +122,7 @@ export default function Team() {
   const members = selected?.workspace_members || []
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
+    <div className="min-h-screen bg-transparent text-white">
       <Header darkMode={darkMode} />
 
       <div className="max-w-5xl mx-auto px-4 py-8">

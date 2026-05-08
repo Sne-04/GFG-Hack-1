@@ -1,14 +1,11 @@
 import { createHmac } from 'crypto'
-import { createClient } from '@supabase/supabase-js'
+import { getSQL } from './_lib/neon.js'
 import { validateCoupon } from './coupons.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
-
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   try {
     const {
@@ -23,7 +20,6 @@ export default async function handler(req, res) {
     } = req.body
 
     // ── Free coupon activation (100% off — no Razorpay needed) ──────
-    // NOTE: keySecret is NOT required here — free coupons skip payment entirely
     if (freeActivation) {
       if (!couponCode || !plan || !billing || !userId) {
         return res.status(400).json({ error: 'Missing fields for free activation' })
@@ -34,10 +30,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Invalid or non-free coupon code' })
       }
 
-      // Save plan via service role key (server-side, preferred)
       const serverSaved = await activatePlan({
-        supabaseUrl,
-        supabaseServiceKey,
         userId,
         plan,
         billing,
@@ -74,8 +67,6 @@ export default async function handler(req, res) {
     }
 
     await activatePlan({
-      supabaseUrl,
-      supabaseServiceKey,
       userId,
       plan,
       billing,
@@ -97,41 +88,34 @@ export default async function handler(req, res) {
 }
 
 /**
- * Saves the plan to Supabase using the service role key.
- * Returns true if saved, false if skipped (keys not configured).
+ * Saves the plan to Neon PostgreSQL.
  */
-async function activatePlan({ supabaseUrl, supabaseServiceKey, userId, plan, billing, paymentId, orderId }) {
-  if (!supabaseUrl || !supabaseServiceKey) {
-    console.warn('[razorpay-verify] No service role key — skipping server-side plan save. Client will save via session.')
-    return false
-  }
+async function activatePlan({ userId, plan, billing, paymentId, orderId }) {
+  try {
+    const sql = getSQL()
 
-  const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const now = new Date()
+    const expiresAt = new Date(now)
+    if (billing === 'yearly') {
+      expiresAt.setFullYear(expiresAt.getFullYear() + 1)
+    } else {
+      expiresAt.setMonth(expiresAt.getMonth() + 1)
+    }
 
-  const now = new Date()
-  const expiresAt = new Date(now)
-  if (billing === 'yearly') {
-    expiresAt.setFullYear(expiresAt.getFullYear() + 1)
-  } else {
-    expiresAt.setMonth(expiresAt.getMonth() + 1)
-  }
-
-  const { error } = await supabase
-    .from('profiles')
-    .update({
-      plan,
-      billing_period: billing,
-      razorpay_payment_id: paymentId,
-      razorpay_order_id: orderId,
-      plan_expires_at: expiresAt.toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq('user_id', userId)
-
-  if (error) {
+    await sql`
+      INSERT INTO profiles (user_id, plan, billing_period, razorpay_payment_id, razorpay_order_id, plan_expires_at, updated_at)
+      VALUES (${userId}, ${plan}, ${billing}, ${paymentId}, ${orderId}, ${expiresAt.toISOString()}, NOW())
+      ON CONFLICT (user_id) DO UPDATE SET
+        plan = EXCLUDED.plan,
+        billing_period = EXCLUDED.billing_period,
+        razorpay_payment_id = EXCLUDED.razorpay_payment_id,
+        razorpay_order_id = EXCLUDED.razorpay_order_id,
+        plan_expires_at = EXCLUDED.plan_expires_at,
+        updated_at = NOW()
+    `
+    return true
+  } catch (error) {
     console.error('[razorpay-verify] Failed to update profile plan:', error)
     return false
   }
-
-  return true
 }

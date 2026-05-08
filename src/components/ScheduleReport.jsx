@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, Clock, Mail, Calendar, Trash2, Plus, Check, AlertCircle } from 'lucide-react'
-import { supabase } from '../utils/supabase'
+import { useAuth } from '../contexts/AuthContext'
 
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
@@ -19,6 +19,7 @@ export default function ScheduleReport({ dashboardId, darkMode, userEmail, onClo
   const [error, setError]           = useState('')
   const [success, setSuccess]       = useState('')
   const [showForm, setShowForm]     = useState(false)
+  const { getToken } = useAuth()
 
   const [email, setEmail]           = useState(userEmail || '')
   const [frequency, setFrequency]   = useState('weekly')
@@ -30,8 +31,7 @@ export default function ScheduleReport({ dashboardId, darkMode, userEmail, onClo
   async function loadSchedules() {
     setLoading(true)
     try {
-      const session = await supabase.auth.getSession()
-      const token = session?.data?.session?.access_token
+      const token = await getToken()
       const res = await fetch(`/api/schedule-report?dashboard_id=${dashboardId}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -50,8 +50,7 @@ export default function ScheduleReport({ dashboardId, darkMode, userEmail, onClo
     setSaving(true)
     setError('')
     try {
-      const session = await supabase.auth.getSession()
-      const token = session?.data?.session?.access_token
+      const token = await getToken()
       const body = {
         dashboard_id: dashboardId,
         recipient_email: email.trim(),
@@ -79,8 +78,7 @@ export default function ScheduleReport({ dashboardId, darkMode, userEmail, onClo
 
   async function deleteSchedule(id) {
     try {
-      const session = await supabase.auth.getSession()
-      const token = session?.data?.session?.access_token
+      const token = await getToken()
       await fetch(`/api/schedule-report?id=${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },

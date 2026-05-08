@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Users, ChevronDown, Plus } from 'lucide-react'
-import { supabase } from '../utils/supabase'
+import { useAuth } from '../contexts/AuthContext'
 
 /**
  * WorkspacePicker — compact dropdown for the Dashboard sidebar
@@ -13,6 +13,7 @@ export default function WorkspacePicker({ darkMode }) {
   const [workspaces, setWorkspaces] = useState([])
   const [active, setActive]         = useState(null)
   const ref = useRef(null)
+  const { getToken } = useAuth()
 
   useEffect(() => { loadWorkspaces() }, [])
 
@@ -26,8 +27,7 @@ export default function WorkspacePicker({ darkMode }) {
 
   async function loadWorkspaces() {
     try {
-      const s = await supabase.auth.getSession()
-      const token = s?.data?.session?.access_token
+      const token = await getToken()
       if (!token) return
       const res = await fetch('/api/workspaces', { headers: { Authorization: `Bearer ${token}` } })
       const json = await res.json()

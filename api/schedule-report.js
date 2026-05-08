@@ -1,12 +1,5 @@
-import { createClient } from '@supabase/supabase-js'
+import { getSQL } from './_lib/neon.js'
 import { verifyAuth, AuthError } from './_lib/auth.js'
-
-function getServiceClient() {
-  const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) throw new Error('Supabase service role not configured')
-  return createClient(url, key)
-}
 
 function calcNextSendAt(frequency, dayOfWeek, dayOfMonth) {
   const now = new Date()
@@ -42,20 +35,26 @@ export default async function handler(req, res) {
   }
   if (!user) return res.status(401).json({ error: 'Unauthorized' })
 
-  const supabase = getServiceClient()
+  const sql = getSQL()
 
-  // ── GET: list schedules for a dashboard ───────────────────────────
+  // ── GET: list schedules ───────────────────────────────────────────
   if (req.method === 'GET') {
-    const { dashboard_id } = req.query
-    const query = supabase
-      .from('scheduled_reports')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-    if (dashboard_id) query.eq('dashboard_id', dashboard_id)
-    const { data, error } = await query
-    if (error) return res.status(500).json({ error: error.message })
-    return res.status(200).json({ schedules: data || [] })
+    const { dashboard_id } = req.query || {}
+    let rows
+    if (dashboard_id) {
+      rows = await sql`
+        SELECT * FROM scheduled_reports 
+        WHERE user_id = ${user.id} AND dashboard_id = ${dashboard_id}::uuid
+        ORDER BY created_at DESC
+      `
+    } else {
+      rows = await sql`
+        SELECT * FROM scheduled_reports 
+        WHERE user_id = ${user.id}
+        ORDER BY created_at DESC
+      `
+    }
+    return res.status(200).json({ schedules: rows })
   }
 
   // ── POST: create a new schedule ───────────────────────────────────
@@ -68,34 +67,22 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'frequency must be weekly or monthly' })
     }
     const next_send_at = calcNextSendAt(frequency, day_of_week, day_of_month)
-    const { data, error } = await supabase
-      .from('scheduled_reports')
-      .insert({
-        user_id: user.id,
-        dashboard_id,
-        recipient_email,
-        frequency,
-        day_of_week: frequency === 'weekly' ? (day_of_week ?? 1) : null,
-        day_of_month: frequency === 'monthly' ? (day_of_month ?? 1) : null,
-        next_send_at,
-        is_active: true,
-      })
-      .select()
-      .single()
-    if (error) return res.status(500).json({ error: error.message })
-    return res.status(201).json({ schedule: data })
+    const dow = frequency === 'weekly' ? (day_of_week ?? 1) : null
+    const dom = frequency === 'monthly' ? (day_of_month ?? 1) : null
+
+    const rows = await sql`
+      INSERT INTO scheduled_reports (user_id, dashboard_id, recipient_email, frequency, day_of_week, day_of_month, next_send_at, is_active)
+      VALUES (${user.id}, ${dashboard_id}::uuid, ${recipient_email}, ${frequency}, ${dow}, ${dom}, ${next_send_at}, true)
+      RETURNING *
+    `
+    return res.status(201).json({ schedule: rows[0] })
   }
 
   // ── DELETE: remove a schedule ─────────────────────────────────────
   if (req.method === 'DELETE') {
     const { id } = req.query
     if (!id) return res.status(400).json({ error: 'id is required' })
-    const { error } = await supabase
-      .from('scheduled_reports')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', user.id) // ensure ownership
-    if (error) return res.status(500).json({ error: error.message })
+    await sql`DELETE FROM scheduled_reports WHERE id = ${id}::uuid AND user_id = ${user.id}`
     return res.status(200).json({ success: true })
   }
 

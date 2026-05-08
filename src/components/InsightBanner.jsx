@@ -38,7 +38,7 @@ const InsightBanner = ({ insight, anomalies }) => {
       <div className="text-primary font-bold mb-2 text-[13px] flex items-center gap-2 uppercase tracking-wider">
         <span className="bg-primary/20 p-1.5 rounded-md text-[14px]">🤖</span> AI Insight
       </div>
-      <div className="text-slate-300 leading-relaxed text-[14px] font-medium">
+      <div className="text-slate-700 leading-relaxed text-[14px] font-medium">
         {displayed}
         {displayed.length < (insight?.length || 0) && (
           <span className="animate-pulse text-primary ml-1 text-lg">|</span>

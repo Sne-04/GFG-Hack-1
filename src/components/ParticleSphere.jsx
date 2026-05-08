@@ -68,7 +68,7 @@ export default function ParticleSphere() {
     }
     starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starVerts, 3))
     scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({
-      size: 0.15, color: 0x6366f1, transparent: true, opacity: 0.4, sizeAttenuation: true
+      size: 0.15, color: 0x94a3b8, transparent: true, opacity: 0.4, sizeAttenuation: true
     })))
 
     // Particle shapes
@@ -83,9 +83,9 @@ export default function ParticleSphere() {
     for (let i = 0; i < COUNT; i++) {
       const r = Math.random()
       if (r < 0.7) {
-        colors[i * 3] = 0.39; colors[i * 3 + 1] = 0.4; colors[i * 3 + 2] = 0.95 // #6366f1
+        colors[i * 3] = 0.31; colors[i * 3 + 1] = 0.27; colors[i * 3 + 2] = 0.90 // #4f46e5 (Indigo)
       } else {
-        colors[i * 3] = 0.13; colors[i * 3 + 1] = 0.83; colors[i * 3 + 2] = 0.93 // #22d3ee
+        colors[i * 3] = 0.06; colors[i * 3 + 1] = 0.72; colors[i * 3 + 2] = 0.50 // #10b981 (Emerald)
       }
       sizes[i] = Math.random() * 0.12 + 0.04
     }
@@ -95,8 +95,8 @@ export default function ParticleSphere() {
     geo.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1))
 
     const mat = new THREE.PointsMaterial({
-      size: 0.12, vertexColors: true, transparent: true, opacity: 0.85,
-      blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true
+      size: 0.12, vertexColors: true, transparent: true, opacity: 0.75,
+      blending: THREE.NormalBlending, depthWrite: false, sizeAttenuation: true
     })
     const points = new THREE.Points(geo, mat)
     scene.add(points)

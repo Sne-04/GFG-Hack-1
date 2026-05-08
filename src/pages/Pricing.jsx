@@ -186,7 +186,7 @@ export default function Pricing() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
+    <div className="min-h-screen bg-transparent text-white">
       {/* Nav */}
       <nav className="border-b border-white/5 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">

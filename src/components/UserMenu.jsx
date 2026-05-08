@@ -2,12 +2,13 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LogOut, User, ChevronDown, Settings, Shield, CreditCard } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { signOut } from '../utils/supabase'
+import { useClerk } from '@clerk/clerk-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getPlan } from '../utils/quota'
 
 export default function UserMenu() {
-  const { user, supabaseEnabled, plan: userPlan } = useAuth()
+  const { user, clerkEnabled, plan: userPlan } = useAuth()
+  const { signOut } = useClerk()
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   const navigate = useNavigate()
@@ -20,7 +21,7 @@ export default function UserMenu() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  if (!supabaseEnabled || !user) return null
+  if (!clerkEnabled || !user) return null
 
   const name = user.user_metadata?.name || user.email?.split('@')[0] || 'User'
   const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
@@ -31,8 +32,7 @@ export default function UserMenu() {
 
   const handleSignOut = async () => {
     try {
-      await signOut()
-      navigate('/login')
+      await signOut(() => navigate('/login'))
     } catch (err) {
       console.error('Sign out failed:', err)
     }

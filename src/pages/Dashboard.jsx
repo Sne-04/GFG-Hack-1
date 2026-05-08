@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Database, Plus, FileSpreadsheet, ChevronRight, AlertTriangle, Code, TrendingUp, Download, X, Sparkles, Save, Home, Sun, Moon, Lock, CheckCircle, Table2, Code2, Clock } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
-import ParticleBackground from '../components/ParticleBackground'
+// ParticleBackground removed — using clean white bg
 import CSVUpload from '../components/CSVUpload'
 import QueryInput from '../components/QueryInput'
 import LoadingSteps from '../components/LoadingSteps'
@@ -40,7 +40,7 @@ export default function Dashboard() {
   const [recentQueries, setRecentQueries] = useState([])
   const [activeFilters, setActiveFilters] = useState({})
   const [theme, setTheme] = useState(() => localStorage.getItem('datamind-theme') || 'indigo')
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('datamind-mode') !== 'light')
+  const [darkMode, setDarkMode] = useState(false) // Always default to light mode for the premium Antigravity aesthetic
   const [resultTab, setResultTab] = useState('sql')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(false)
@@ -112,14 +112,9 @@ export default function Dashboard() {
       setResult(null)
       setError(null)
     } catch (e) {
-      console.error(e)
-      // Browser FileReader security error — file reference revoked after drag/select
-      const isReadError = e?.message?.toLowerCase().includes('could not be read') ||
-        e?.message?.toLowerCase().includes('permission') ||
-        e?.name === 'NotReadableError'
-      setError(isReadError
-        ? 'Could not read the file. Try dragging it again or use the file picker to browse.'
-        : `Could not parse file: ${e.message || 'Please try again.'}`)
+      console.error('File parsing error:', e)
+      // Just show the actual error to the user instead of masking it with drag-and-drop security guesses
+      setError(`Upload failed: ${e?.message || e?.name || 'Please try again.'}`)
     }
   }, [])
 
@@ -236,7 +231,7 @@ export default function Dashboard() {
     })) : []
 
   return (
-    <div className={`flex flex-col md:flex-row h-screen overflow-hidden relative w-full transition-colors duration-300 ${darkMode ? 'bg-[#08080c] text-slate-200' : 'bg-[#f0f2f5] text-slate-800'}`}>
+    <div className={`flex flex-col md:flex-row h-screen overflow-hidden relative w-full transition-colors duration-300 bg-white text-slate-800`}>
       <OnboardingTour />
 
       {/* Upgrade success banner */}
@@ -259,19 +254,19 @@ export default function Dashboard() {
       {isSidebarOpen && <div className="fixed inset-0 bg-black/70 z-40 md:hidden" onClick={() => setIsSidebarOpen(false)} />}
       
       {/* LEFT SIDEBAR */}
-      <aside className={`fixed inset-y-0 left-0 z-50 transform transition-all md:relative md:translate-x-0 w-60 border-r flex flex-col shrink-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${darkMode ? 'bg-[#08080c] border-white/5' : 'bg-white border-slate-200'}`}>
-        <div className={`p-4 border-b flex items-center justify-between ${darkMode ? 'border-white/5' : 'border-slate-100'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 transform transition-all md:relative md:translate-x-0 w-60 border-r border-slate-100 flex flex-col shrink-0 bg-white ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+            <div className="w-6 h-6 rounded-md bg-slate-900 flex items-center justify-center">
               <Database size={14} className="text-white" />
             </div>
-            <span className="font-bold text-[16px] tracking-tight">DataMind AI</span>
+            <span className="font-bold text-[15px] tracking-tight text-slate-900">DataMind AI</span>
           </Link>
-          <button className="md:hidden text-slate-400 hover:text-white px-2" onClick={() => setIsSidebarOpen(false)} aria-label="Close sidebar">✕</button>
+          <button className="md:hidden text-slate-400 hover:text-slate-700 px-2" onClick={() => setIsSidebarOpen(false)} aria-label="Close sidebar">✕</button>
         </div>
 
         <div className="p-4 space-y-2">
-          <button onClick={() => { setResult(null); setError(null) }} className="w-full glow-btn rounded-lg py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 text-white">
+          <button onClick={clearData} className="w-full glow-btn rounded-lg py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 text-white">
             <Plus size={14}/>New Dashboard
           </button>
           {user && supabaseEnabled && (
@@ -289,7 +284,7 @@ export default function Dashboard() {
           const isUnlimited = limit === -1
           return (
             <div className="px-4 mb-2">
-              <div className="glass rounded-lg p-2.5 border border-white/5">
+              <div className="bg-slate-50 rounded-lg p-2.5 border border-slate-200">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[9px] uppercase tracking-wider text-slate-500 font-semibold">Today's Queries</span>
                   <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${plan === 'free' ? 'bg-slate-500/15 text-slate-400' : plan === 'pro' ? 'bg-primary/15 text-primary' : 'bg-emerald-500/15 text-emerald-400'}`}>
@@ -297,7 +292,7 @@ export default function Dashboard() {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className={`flex-1 h-1.5 rounded-full overflow-hidden ${darkMode ? 'bg-white/5' : 'bg-slate-200'}`}>
+                  <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-slate-200">
                     <div
                       className={`h-full rounded-full transition-all ${isUnlimited || used / limit < 0.8 ? 'bg-primary' : used / limit < 1 ? 'bg-yellow-500' : 'bg-red-500'}`}
                       style={{ width: isUnlimited ? '15%' : `${Math.min(100, (used / limit) * 100)}%` }}
@@ -327,7 +322,7 @@ export default function Dashboard() {
           <p className="text-[9px] uppercase tracking-widest text-slate-500 font-semibold mb-2">Recent Queries</p>
           <div className="space-y-1">
             {(plan === 'free' ? recentQueries.slice(0, 20) : recentQueries).map((q, i) => (
-              <button key={i} onClick={() => handleQuery(q)} className={`w-full text-left text-[10px] text-slate-400 hover:text-primary px-2 py-1.5 rounded-lg transition-all truncate ${darkMode ? 'hover:bg-white/5' : 'hover:bg-slate-100'}`}>
+              <button key={i} onClick={() => handleQuery(q)} className="w-full text-left text-[10px] text-slate-500 hover:text-indigo-600 px-2 py-1.5 rounded-lg transition-all truncate hover:bg-slate-50">
                 <ChevronRight size={8} className="inline mr-1"/>{q}
               </button>
             ))}
@@ -335,49 +330,15 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Theme + Data Source */}
-        <div className={`p-4 border-t space-y-3 ${darkMode ? 'border-white/5' : 'border-slate-100'}`}>
-          <div>
-            <p className="text-[9px] uppercase tracking-widest text-slate-500 font-semibold mb-2">Theme</p>
-            {/* Dark / Light toggle */}
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={`w-full flex items-center gap-2 glass rounded-lg px-2.5 py-2 text-[10px] font-medium hover:border-primary/30 transition-all mb-2`}
-              title={darkMode ? 'Switch to Light mode' : 'Switch to Dark mode'}
-            >
-              {darkMode ? <Sun size={12} className="text-amber-400"/> : <Moon size={12} className="text-indigo-500"/>}
-              <span className={darkMode ? 'text-slate-300' : 'text-slate-600'}>
-                {darkMode ? 'Switch to Light' : 'Switch to Dark'}
-              </span>
-            </button>
-            {/* Accent color picker */}
-            <div className="flex items-center gap-2">
-              <span className={`text-[9px] ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Accent:</span>
-              {Object.entries(themeColors).map(([k, c]) => (
-                <button
-                  key={k}
-                  onClick={() => { setTheme(k); localStorage.setItem('datamind-theme', k) }}
-                  title={k === 'indigo' ? 'Indigo (Purple)' : 'Emerald (Green)'}
-                  className={`flex items-center gap-1 text-[9px] rounded-md px-1.5 py-0.5 transition-all border ${
-                    theme === k
-                      ? `border-current font-semibold ${darkMode ? 'bg-white/5' : 'bg-slate-100'}`
-                      : `border-transparent opacity-50 hover:opacity-80`
-                  }`}
-                  style={{ color: c }}
-                >
-                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: c }}/>
-                  {k.charAt(0).toUpperCase() + k.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
+        {/* Data Source */}
+        <div className="p-4 border-t border-slate-100 space-y-3">
 
           <div>
             <p className="text-[9px] uppercase tracking-widest text-slate-500 font-semibold mb-2">Data Source</p>
             {csvFile ? (
-              <div className="glass rounded-lg p-2 text-[10px]">
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-[10px]">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-emerald-400">
+                  <div className="flex items-center gap-1.5 text-emerald-600 font-medium">
                     <FileSpreadsheet size={10}/>
                     <span className="truncate max-w-[120px]">{csvFile}</span>
                   </div>
@@ -395,8 +356,8 @@ export default function Dashboard() {
             ) : (
               <div className="space-y-2">
                 <CSVUpload onUpload={handleUpload} compact />
-                <GoogleSheetsImport onImport={handleUpload} darkMode={darkMode} />
-                <button onClick={loadDemoData} className="w-full text-center border border-primary/30 text-primary hover:bg-primary/10 rounded-lg py-1.5 text-[9px] font-medium transition-colors">
+                <GoogleSheetsImport onImport={handleUpload} darkMode={false} />
+                <button onClick={loadDemoData} className="w-full text-center border border-slate-200 text-indigo-600 hover:bg-indigo-50 rounded-lg py-1.5 text-[9px] font-semibold transition-colors">
                   Try with demo data →
                 </button>
               </div>
@@ -404,8 +365,8 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-[9px] text-emerald-400">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></div>
+            <div className="flex items-center gap-1.5 text-[9px] text-emerald-600 font-medium">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
               Ready
             </div>
             <UserMenu />
@@ -416,7 +377,7 @@ export default function Dashboard() {
             href="mailto:support@datamind.ai?subject=DataMind%20AI%20Support"
             target="_blank"
             rel="noopener noreferrer"
-            className={`flex items-center gap-2 text-xs mt-2 px-3 py-2 rounded-lg border transition-all duration-200 ${darkMode ? 'text-slate-400 hover:text-white border-white/5 hover:border-primary/30 hover:bg-primary/10' : 'text-slate-500 hover:text-primary border-slate-200 hover:border-primary/30 hover:bg-primary/5'}`}
+            className="flex items-center gap-2 text-xs mt-2 px-3 py-2 rounded-lg border transition-all duration-200 text-slate-500 hover:text-primary border-slate-200 hover:border-primary/30 hover:bg-primary/5"
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             Community & Support
@@ -427,8 +388,8 @@ export default function Dashboard() {
       {/* MAIN CONTENT */}
       <main className="flex-1 overflow-y-auto z-10 w-full flex flex-col relative">
         {/* Mobile Header (visible only on md:hidden) */}
-        <div className={`md:hidden flex items-center justify-between p-4 border-b sticky top-0 z-20 ${darkMode ? 'border-white/5 bg-[#08080c]' : 'border-slate-200 bg-white'}`}>
-          <button onClick={() => setIsSidebarOpen(true)} aria-label="Open sidebar menu" className="text-slate-300 pointer-events-auto">
+        <div className="md:hidden flex items-center justify-between p-4 border-b border-slate-100 bg-white sticky top-0 z-20">
+          <button onClick={() => setIsSidebarOpen(true)} aria-label="Open sidebar menu" className="text-slate-400 pointer-events-auto">
             <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
           </button>
           <Link to="/" className="font-bold text-sm">DataMind</Link>
@@ -440,16 +401,16 @@ export default function Dashboard() {
         <div id="dashboard-content" ref={contentRef} className="p-3 md:p-6 w-full max-w-5xl mx-auto flex-1 flex flex-col">
           {!csvData && !result && (
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mt-16 sm:mt-24 max-w-2xl mx-auto w-full">
-              <div className={`rounded-2xl p-8 sm:p-12 text-center shadow-2xl relative overflow-hidden group ${darkMode ? 'glass border border-white/5 shadow-primary/5' : 'bg-white border border-slate-200 shadow-slate-200/50'}`}>
+              <div className="rounded-2xl p-8 sm:p-12 text-center shadow-sm relative overflow-hidden group bg-white border border-slate-200 hover:shadow-md transition-shadow">
                 <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-                <div className="w-20 h-20 mx-auto bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center mb-6 ring-1 ring-white/10 group-hover:ring-primary/30 transition-all duration-500">
-                  <Database size={32} className="text-primary/80" />
+                <div className="w-20 h-20 mx-auto bg-gradient-to-br from-slate-900 to-slate-700 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-slate-900/20 transition-all duration-500 group-hover:scale-105">
+                  <Database size={32} className="text-white" />
                 </div>
-                <h2 className={`text-3xl font-bold mb-3 tracking-tight ${darkMode ? 'text-white' : 'text-slate-800'}`}>Welcome to <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">DataMind AI</span></h2>
-                <p className={`mb-10 max-w-md mx-auto leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Instantly transform any raw CSV data into interactive intelligence. Upload your dataset or start with our playground data.</p>
+                <h2 className="text-3xl font-bold mb-3 tracking-tight text-slate-800">Welcome to <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">DataMind AI</span></h2>
+                <p className="mb-10 max-w-md mx-auto leading-relaxed text-slate-500">Instantly transform any raw CSV data into interactive intelligence. Upload your dataset or start with our playground data.</p>
                 <div className="max-w-xs mx-auto space-y-4 relative z-10 flex flex-col items-center">
                   <div className="w-full"><CSVUpload onUpload={handleUpload} /></div>
-                  <button onClick={loadDemoData} className={`w-full text-center hover:border-primary/30 hover:bg-primary/10 hover:text-primary rounded-xl py-3.5 text-sm font-medium transition-all duration-300 flex items-center justify-center gap-2 ${darkMode ? 'border border-white/5 bg-black/40 text-slate-300' : 'border border-slate-200 bg-slate-50 text-slate-500'}`}>
+                  <button onClick={loadDemoData} className="w-full text-center hover:border-primary/30 hover:bg-primary/5 hover:text-primary rounded-xl py-3.5 text-sm font-medium transition-all duration-300 flex items-center justify-center gap-2 border border-slate-200 bg-white text-slate-600 shadow-sm">
                     <Sparkles size={16} /> Try with demo playground
                   </button>
                 </div>
@@ -460,9 +421,9 @@ export default function Dashboard() {
           {csvData && !result && !loading && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <Header title="New Dashboard" subtitle={`${csvFile} • ${csvData.rowCount} rows • ${csvData.columns.length} columns`} />
-              <div className="glass rounded-xl p-4 mb-4">
-                <p className="text-xs text-slate-400">
-                  <span className={`font-medium ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>{csvData.columns.length} Columns detected.</span>
+              <div className="bg-white border border-slate-200 rounded-xl p-4 mb-4">
+                <p className="text-xs text-slate-500">
+                  <span className="font-semibold text-slate-700">{csvData.columns.length} Columns detected.</span>
                   <span className="hidden sm:inline pl-2">
                     {csvData.columns.slice(0, 6).join(', ')}{csvData.columns.length > 6 ? ' ...' : ''}
                   </span>
@@ -480,10 +441,10 @@ export default function Dashboard() {
           {loading && <LoadingSteps />}
 
           {error && !loading && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-xl p-6 text-center mt-8 border-red-500/20">
-              <AlertTriangle size={24} className="text-red-400 mx-auto mb-2"/>
-              <p className="text-sm text-red-300">{error}</p>
-              <button onClick={() => setError(null)} className="text-xs text-primary mt-3 underline">Dismiss</button>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-red-50 border border-red-200 rounded-xl p-6 text-center mt-8">
+              <AlertTriangle size={24} className="text-red-500 mx-auto mb-2"/>
+              <p className="text-sm text-red-600 font-medium">{error}</p>
+              <button onClick={() => setError(null)} className="text-xs text-red-500 mt-3 underline hover:text-red-700">Dismiss</button>
             </motion.div>
           )}
 
@@ -531,7 +492,7 @@ export default function Dashboard() {
                     import('html2canvas').then(({ default: html2canvas }) => {
                       const el = document.getElementById('dashboard-content')
                       if (!el) return
-                      html2canvas(el, { backgroundColor: '#0a0a0f', scale: 2 }).then(canvas => {
+                      html2canvas(el, { backgroundColor: '#ffffff', scale: 2 }).then(canvas => {
                         const link = document.createElement('a')
                         link.download = 'datamind-dashboard.png'
                         link.href = canvas.toDataURL()
@@ -660,7 +621,7 @@ export default function Dashboard() {
 
           {/* Query Input */}
           {csvData && (
-            <div className={`sticky bottom-0 mt-auto z-30 pt-4 pb-4 md:pb-2 border-t md:border-t-0 p-3 md:p-0 ${darkMode ? 'bg-[#08080c] md:bg-gradient-to-t md:from-[#08080c] md:via-[#08080c]/90 md:to-transparent border-white/5' : 'bg-[#f4f6f9] md:bg-gradient-to-t md:from-[#f4f6f9] md:via-[#f4f6f9]/90 md:to-transparent border-slate-200'}`}>
+            <div className="sticky bottom-0 mt-auto z-30 pt-4 pb-4 md:pb-2 border-t md:border-t-0 p-3 md:p-0 bg-white/90 backdrop-blur-md md:bg-gradient-to-t md:from-white md:via-white/95 md:to-transparent border-slate-100">
               <QueryInput onSubmit={handleQuery} hasData={!!csvData} recentQueries={recentQueries} />
             </div>
           )}
@@ -671,7 +632,7 @@ export default function Dashboard() {
       {showEmbed && (
         <EmbedCode
           dashboardId={savedDashboardId}
-          darkMode={darkMode}
+          darkMode={false}
           onClose={() => setShowEmbed(false)}
         />
       )}
@@ -680,7 +641,7 @@ export default function Dashboard() {
       {showSchedule && savedDashboardId && (
         <ScheduleReport
           dashboardId={savedDashboardId}
-          darkMode={darkMode}
+          darkMode={false}
           userEmail={user?.email}
           onClose={() => setShowSchedule(false)}
         />
@@ -694,18 +655,18 @@ export default function Dashboard() {
         bottom-0 left-0 right-0 h-[80vh] rounded-t-2xl border-t
         md:relative md:inset-y-auto md:left-auto md:right-auto md:h-auto md:w-80 md:rounded-none md:border-t-0 md:border-l md:translate-y-0
         ${isRightPanelOpen ? 'translate-y-0' : 'translate-y-full md:translate-y-0'}
-        ${darkMode ? 'bg-[#08080c] border-white/5' : 'bg-white border-slate-200'}`}>
+        bg-white border-slate-200`}>
         {/* Drag handle (mobile only) */}
         <div className="md:hidden flex justify-center pt-3 pb-1">
-          <div className={`w-10 h-1 rounded-full ${darkMode ? 'bg-white/20' : 'bg-slate-300'}`} />
+          <div className="w-10 h-1 rounded-full bg-slate-300" />
         </div>
-        <div className={`flex border-b items-center p-4 ${darkMode ? 'border-white/5' : 'border-slate-100'}`}>
-          <button className={`md:hidden text-slate-400 px-2 mr-2 border-r transition-colors ${darkMode ? 'hover:text-white border-white/5' : 'hover:text-slate-700 border-slate-100'}`} onClick={() => setIsRightPanelOpen(false)} aria-label="Close chat panel">✕</button>
-          <span className={`font-bold text-sm ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>AI Assistant</span>
+        <div className="flex border-b border-slate-100 items-center p-4">
+          <button className="md:hidden text-slate-400 px-2 mr-2 border-r hover:text-slate-700 border-slate-100 transition-colors" onClick={() => setIsRightPanelOpen(false)} aria-label="Close chat panel">✕</button>
+          <span className="font-bold text-sm text-slate-800">AI Assistant</span>
         </div>
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className={`flex-1 overflow-y-auto p-4 border-b ${darkMode ? 'border-white/5' : 'border-slate-100'}`}>
-            <AIChat darkMode={darkMode} context={(() => {
+          <div className="flex-1 overflow-y-auto p-4 border-b border-slate-100">
+            <AIChat darkMode={false} context={(() => {
               const parts = []
               if (csvData) {
                 parts.push(`CSV Columns: ${csvData.columns.join(', ')}`)
@@ -726,20 +687,20 @@ export default function Dashboard() {
             })()} />
           </div>
           {csvData ? (
-            <div className={`h-64 overflow-y-auto p-4 ${darkMode ? 'bg-black/20' : 'bg-slate-50'}`}>
-              <p className="text-xs text-slate-400 mb-3 font-semibold tracking-wider uppercase">CSV Columns ({csvData.columns.length})</p>
+            <div className="h-64 overflow-y-auto p-4 bg-slate-50">
+              <p className="text-xs text-slate-500 mb-3 font-semibold tracking-wider uppercase">CSV Columns ({csvData.columns.length})</p>
               <div className="space-y-1.5">
                 {csvData.columns.map(col => (
-                  <div key={col} className="glass rounded-lg p-2">
-                    <p className={`text-[10px] font-medium ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>{col}</p>
+                  <div key={col} className="bg-white border border-slate-200 rounded-lg p-2.5">
+                    <p className="text-[10px] font-semibold text-slate-700">{col}</p>
                     <p className="text-[9px] text-slate-500 truncate">{csvData.data.slice(0, 3).map(r => r[col]).join(', ')}</p>
                   </div>
                 ))}
               </div>
             </div>
           ) : (
-            <div className={`h-64 flex items-center justify-center ${darkMode ? 'bg-black/20' : 'bg-slate-50'}`}>
-              <p className="text-[10px] text-slate-600 italic">No data uploaded</p>
+            <div className="h-64 flex items-center justify-center bg-slate-50">
+              <p className="text-[10px] text-slate-400 italic">No data uploaded</p>
             </div>
           )}
         </div>

@@ -1,18 +1,19 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Upload, MessageSquare, BarChart3, ChevronDown, ArrowRight, Github, Sparkles, Database, Linkedin, Users, Twitter, Globe } from 'lucide-react'
+import { Upload, MessageSquare, BarChart3, ArrowRight, Github, Sparkles, Database, Linkedin, Twitter, Globe, Zap, Shield, Clock, ChevronDown } from 'lucide-react'
 import ParticleSphere from '../components/ParticleSphere'
 
 const features = [
-  { icon: Upload, title: 'Upload Your Data', desc: 'Drag & drop any CSV or Excel file. We auto-detect schema, columns, and data types instantly.', color: 'from-indigo-500 to-violet-600' },
-  { icon: MessageSquare, title: 'Ask in Plain English', desc: 'No SQL, no code needed. Just type your question and get answers from your data.', color: 'from-cyan-500 to-blue-600' },
-  { icon: BarChart3, title: 'Instant Visual Insights', desc: 'Beautiful charts, KPIs, and advanced analysis generated in seconds.', color: 'from-emerald-500 to-teal-600' }
+  { icon: Upload, title: 'Upload Your Data', desc: 'Drag & drop any CSV or Excel file. We auto-detect schema, columns, and data types instantly.', color: 'bg-indigo-500' },
+  { icon: MessageSquare, title: 'Ask in Plain English', desc: 'No SQL knowledge needed. Just type your question and get answers powered by AI.', color: 'bg-cyan-500' },
+  { icon: BarChart3, title: 'Instant Visual Insights', desc: 'Beautiful charts, KPIs, trend analysis and anomaly detection generated in seconds.', color: 'bg-emerald-500' }
 ]
 
-const steps = [
-  { n: '01', title: 'Upload CSV', desc: 'Drag your data file', emoji: '📁' },
-  { n: '02', title: 'Ask a question', desc: 'Type in plain English', emoji: '💬' },
-  { n: '03', title: 'Get dashboard', desc: 'Charts + KPIs + insights', emoji: '📊' }
+const stats = [
+  { value: '10K+', label: 'Datasets Analyzed' },
+  { value: '<3s', label: 'Average Response' },
+  { value: '99.9%', label: 'Uptime' },
+  { value: '50+', label: 'Chart Types' },
 ]
 
 const team = [
@@ -21,229 +22,247 @@ const team = [
   { name: 'Gaurav Kumar Mehta', role: 'Full Stack MERN Developer', img: 'https://github.com/gaurav620.png', github: 'https://github.com/gaurav620', linkedin: 'https://www.linkedin.com/in/gaurav-kumar-mehta-6718571a6', website: 'https://www.gauravkumarmehta.com', twitter: 'https://twitter.com/GAURAV___06' }
 ]
 
-const DonutSVG = () => (
-  <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-    <circle cx="100" cy="100" r="70" fill="none" stroke="#1e1e2e" strokeWidth="30"/>
-    <circle cx="100" cy="100" r="70" fill="none" stroke="#6366f1" strokeWidth="30"
-      strokeDasharray="132 308" strokeDashoffset="0" transform="rotate(-90 100 100)"/>
-    <circle cx="100" cy="100" r="70" fill="none" stroke="#22d3ee" strokeWidth="30"
-      strokeDasharray="88 352" strokeDashoffset="-132" transform="rotate(-90 100 100)"/>
-    <circle cx="100" cy="100" r="70" fill="none" stroke="#f59e0b" strokeWidth="30"
-      strokeDasharray="66 374" strokeDashoffset="-220" transform="rotate(-90 100 100)"/>
-    <circle cx="100" cy="100" r="40" fill="#0d0d14"/>
-    <text x="100" y="95" textAnchor="middle" fill="#f1f5f9" fontSize="14" fontWeight="bold">42%</text>
-    <text x="100" y="112" textAnchor="middle" fill="#94a3b8" fontSize="9">Electronics</text>
-  </svg>
-)
-
 export default function LandingPage() {
   const nav = useNavigate()
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#0a0a0f]">
+    <div className="min-h-screen bg-white overflow-x-hidden">
 
-      {/* Navbar — fixed */}
-      <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/5" style={{ backdropFilter: 'blur(16px)' }}>
-        <div className="max-w-6xl mx-auto flex items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <Database size={16} className="text-white" />
+      {/* ─── Navbar ─── */}
+      <nav className="fixed top-0 left-0 right-0 z-50" style={{ background: 'rgba(10,10,15,0.6)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
+        <div className="max-w-6xl mx-auto flex items-center justify-between px-6 py-3.5">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/10 flex items-center justify-center">
+              <Database size={15} className="text-white" />
             </div>
-            <span className="font-bold text-sm">DataMind AI</span>
+            <span className="font-bold text-[15px] text-white tracking-tight">DataMind AI</span>
           </div>
-          <button onClick={() => nav('/dashboard')} className="glow-btn rounded-lg px-5 py-2 text-xs font-semibold text-white flex items-center gap-1.5">
-            Launch App <ArrowRight size={12} />
-          </button>
+          <div className="flex items-center gap-6">
+            <a href="#features" className="text-sm text-slate-400 hover:text-white transition-colors hidden sm:block">Features</a>
+            <a href="#how-it-works" className="text-sm text-slate-400 hover:text-white transition-colors hidden sm:block">How it Works</a>
+            <a href="#team" className="text-sm text-slate-400 hover:text-white transition-colors hidden sm:block">Team</a>
+            <button onClick={() => nav('/dashboard')} className="bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg px-5 py-2 text-sm font-medium transition-colors flex items-center gap-1.5 shadow-lg shadow-indigo-500/25">
+              Launch App <ArrowRight size={14} />
+            </button>
+          </div>
         </div>
       </nav>
 
-      {/* Hero — particle sphere contained here only */}
-      <section className="relative w-full h-screen overflow-hidden">
+      {/* ─── Hero with 3D Particle Sphere ─── */}
+      <section className="relative w-full h-screen overflow-hidden" style={{ background: '#0a0a0f' }}>
         <ParticleSphere />
         <div className="relative z-10 h-full flex items-center justify-center px-4">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="text-center max-w-4xl mx-auto">
             <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2 }}
-              className="glass inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-medium mb-6">
+              className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-medium mb-6 border border-white/10" style={{ background: 'rgba(255,255,255,0.06)' }}>
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              Intelligent Business Insights
+              <span className="text-slate-300">AI-Powered Data Intelligence</span>
             </motion.div>
-            <h1 className="mb-4" style={{
+            <h1 className="mb-5" style={{
               fontSize: 'clamp(3rem, 8vw, 5.5rem)',
               fontWeight: 800,
               color: '#ffffff',
-              textShadow: '0 0 30px rgba(99,102,241,0.4), 0 2px 10px rgba(0,0,0,0.8)',
               letterSpacing: '-0.02em',
               lineHeight: 1.1
             }}>
               DataMind AI
             </h1>
             <p className="mb-8" style={{
-              color: '#e2e8f0',
-              opacity: 1,
-              fontSize: '1.2rem',
-              textShadow: '0 2px 10px rgba(0,0,0,1)',
+              color: '#94a3b8',
+              fontSize: '1.15rem',
               fontWeight: 400
             }}>
               Ask your data anything.<br />
-              <span className="font-medium">Get instant insights in seconds.</span>
+              <span className="text-white/80 font-medium">Get instant insights in seconds.</span>
             </p>
-            <div className="flex gap-3 justify-center mb-6">
-              <button onClick={() => nav('/dashboard')} className="glow-btn rounded-xl px-8 py-3.5 text-sm font-semibold flex items-center gap-2 text-white group">
+            <div className="flex gap-3 justify-center flex-wrap mb-6">
+              <button onClick={() => nav('/dashboard')} className="bg-indigo-500 hover:bg-indigo-400 text-white rounded-full px-8 py-3.5 text-sm font-semibold flex items-center gap-2 group shadow-lg shadow-indigo-500/25 transition-all">
                 Launch Dashboard <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </button>
               <button onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-                className="glass rounded-xl px-6 py-3.5 text-sm font-medium hover:border-white/20 transition-all glass-hover">
+                className="border border-white/20 text-white/80 rounded-full px-6 py-3.5 text-sm font-medium hover:bg-white/5 transition-all">
                 Explore Features
               </button>
             </div>
-            <p style={{ color: '#94a3b8', opacity: 1, fontSize: '0.85rem' }}>No SQL needed • Upload CSV or Excel • Advanced Analysis</p>
+            <p className="text-xs text-slate-500 flex items-center justify-center gap-4 flex-wrap">
+              <span className="flex items-center gap-1"><Shield size={12} /> No data stored on servers</span>
+              <span className="flex items-center gap-1"><Zap size={12} /> Results in under 3 seconds</span>
+              <span className="flex items-center gap-1"><Clock size={12} /> Free tier available</span>
+            </p>
           </motion.div>
         </div>
         <motion.div animate={{ y: [0, 10, 0] }} transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }} className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
-          <ChevronDown size={24} className="text-primary/50" />
+          <ChevronDown size={24} className="text-white/30" />
         </motion.div>
       </section>
 
-      {/* Features — solid bg, no particles */}
-      <section id="features" className="relative z-20 px-6 py-24 bg-[#0a0a0f]">
+      {/* ─── Stats Bar ─── */}
+      <section className="py-14 px-6 bg-white">
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}
+          className="max-w-3xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
+          {stats.map((s, i) => (
+            <div key={i} className="text-center py-4 px-3 bg-white border border-slate-100 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+              <p className="text-2xl font-extrabold text-slate-900 tracking-tight">{s.value}</p>
+              <p className="text-xs text-slate-500 mt-1 font-medium">{s.label}</p>
+            </div>
+          ))}
+        </motion.div>
+      </section>
+
+      {/* ─── Demo Preview ─── */}
+      <section className="px-6 pb-20">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7 }}
+          className="max-w-4xl mx-auto bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 overflow-hidden"
+        >
+          {/* Window chrome */}
+          <div className="flex items-center gap-2 px-5 py-3 bg-slate-50 border-b border-slate-100">
+            <div className="w-3 h-3 rounded-full bg-red-400" />
+            <div className="w-3 h-3 rounded-full bg-amber-400" />
+            <div className="w-3 h-3 rounded-full bg-emerald-400" />
+            <span className="text-xs text-slate-400 ml-3 font-medium">DataMind AI Dashboard</span>
+          </div>
+          {/* Mock dashboard content */}
+          <div className="p-6">
+            <div className="grid grid-cols-4 gap-3 mb-5">
+              {[
+                { v: '$1.24M', l: 'Revenue', t: '+12.5%', up: true },
+                { v: '2,847', l: 'Active Users', t: '+28.3%', up: true },
+                { v: '34.2%', l: 'Conversion', t: '+5.1%', up: true },
+                { v: '$436', l: 'Avg. Order', t: '-2.8%', up: false },
+              ].map((m, i) => (
+                <motion.div key={i} initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                  transition={{ delay: 0.3 + i * 0.1 }}
+                  className="bg-white border border-slate-100 rounded-xl p-3.5 text-center"
+                >
+                  <p className="text-lg font-bold text-slate-900">{m.v}</p>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wide mt-0.5">{m.l}</p>
+                  <p className={`text-[11px] font-semibold mt-1 ${m.up ? 'text-emerald-600' : 'text-red-500'}`}>{m.t}</p>
+                </motion.div>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="border border-slate-100 rounded-xl p-4 h-32 flex items-end gap-1.5">
+                {[40, 65, 45, 80, 55, 90, 70, 85].map((h, i) => (
+                  <motion.div key={i} initial={{ height: 0 }} whileInView={{ height: `${h}%` }} viewport={{ once: true }}
+                    transition={{ delay: 0.5 + i * 0.05, duration: 0.4 }}
+                    className="flex-1 bg-gradient-to-t from-indigo-500 to-indigo-300 rounded-t-md" />
+                ))}
+              </div>
+              <div className="border border-slate-100 rounded-xl p-4 h-32 flex items-center justify-center">
+                <svg viewBox="0 0 200 200" className="w-24 h-24">
+                  <circle cx="100" cy="100" r="70" fill="none" stroke="#f1f5f9" strokeWidth="28"/>
+                  <circle cx="100" cy="100" r="70" fill="none" stroke="#6366f1" strokeWidth="28"
+                    strokeDasharray="132 308" strokeDashoffset="0" transform="rotate(-90 100 100)"/>
+                  <circle cx="100" cy="100" r="70" fill="none" stroke="#22d3ee" strokeWidth="28"
+                    strokeDasharray="88 352" strokeDashoffset="-132" transform="rotate(-90 100 100)"/>
+                  <circle cx="100" cy="100" r="70" fill="none" stroke="#10b981" strokeWidth="28"
+                    strokeDasharray="66 374" strokeDashoffset="-220" transform="rotate(-90 100 100)"/>
+                  <circle cx="100" cy="100" r="42" fill="white"/>
+                  <text x="100" y="97" textAnchor="middle" fill="#1e293b" fontSize="16" fontWeight="bold">42%</text>
+                  <text x="100" y="115" textAnchor="middle" fill="#94a3b8" fontSize="10">Top Segment</text>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* ─── Features ─── */}
+      <section id="features" className="px-6 py-24 bg-slate-50/50">
         <div className="max-w-5xl mx-auto">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-14">
-            <h2 className="text-3xl font-bold mb-3">
-              Everything you need for <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">data insights</span>
+            <p className="text-sm font-semibold text-indigo-600 mb-3 uppercase tracking-wide">Features</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-4">
+              Everything you need for data insights
             </h2>
-            <p className="text-sm text-slate-500 max-w-md mx-auto">Transform raw CSV data into beautiful, actionable dashboards with natural language queries</p>
+            <p className="text-base text-slate-500 max-w-lg mx-auto">Transform raw data into beautiful, actionable dashboards with natural language queries.</p>
           </motion.div>
           <div className="grid md:grid-cols-3 gap-6">
             {features.map((f, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.15 }}
-                className="glass rounded-2xl p-7 glass-hover transition-all duration-300 group cursor-default relative overflow-hidden">
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${f.color} flex items-center justify-center mb-4 group-hover:scale-110 group-hover:shadow-lg transition-all`}>
-                  <f.icon size={22} className="text-white" />
+              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+                className="bg-white border border-slate-100 rounded-2xl p-7 hover:shadow-lg hover:border-slate-200 transition-all duration-300 group">
+                <div className={`w-11 h-11 rounded-xl ${f.color} flex items-center justify-center mb-5 group-hover:scale-105 transition-transform shadow-sm`}>
+                  <f.icon size={20} className="text-white" />
                 </div>
-                <h3 className="font-semibold text-sm mb-2">{f.title}</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">{f.desc}</p>
+                <h3 className="font-bold text-base text-slate-900 mb-2">{f.title}</h3>
+                <p className="text-sm text-slate-500 leading-relaxed">{f.desc}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works — solid bg */}
-      <section className="relative z-20 px-6 py-20 bg-[#0a0a0f]">
+      {/* ─── How It Works ─── */}
+      <section id="how-it-works" className="px-6 py-24">
         <div className="max-w-4xl mx-auto">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-14">
-            <h2 className="text-3xl font-bold mb-3">
-              How it <span className="bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent">works</span>
-            </h2>
-            <p className="text-sm text-slate-500">Three simple steps to data intelligence</p>
+            <p className="text-sm font-semibold text-indigo-600 mb-3 uppercase tracking-wide">How it works</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-4">Three steps to insights</h2>
+            <p className="text-base text-slate-500">From raw data to beautiful dashboards in under 30 seconds.</p>
           </motion.div>
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-0">
-            {steps.map((s, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.2 }} className="flex items-center">
-                <div className="glass rounded-2xl p-6 text-center min-w-[180px] glass-hover transition-all group">
-                  <div className="text-3xl mb-3">{s.emoji}</div>
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center mx-auto mb-3 text-xs font-bold text-white group-hover:scale-110 transition-transform">
-                    {s.n}
-                  </div>
-                  <h3 className="font-semibold text-sm mb-1">{s.title}</h3>
-                  <p className="text-xs text-slate-500">{s.desc}</p>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { n: '01', title: 'Upload your CSV', desc: 'Drag and drop any CSV or Excel file. We detect columns and types automatically.', icon: Upload },
+              { n: '02', title: 'Ask a question', desc: 'Type your question in plain English. No SQL or coding skills required.', icon: MessageSquare },
+              { n: '03', title: 'Get your dashboard', desc: 'Receive instant KPIs, charts, trends, and AI-powered insights.', icon: BarChart3 },
+            ].map((s, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.15 }}
+                className="text-center group">
+                <div className="w-14 h-14 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto mb-5 group-hover:bg-indigo-50 group-hover:border-indigo-200 transition-colors">
+                  <s.icon size={22} className="text-slate-600 group-hover:text-indigo-600 transition-colors" />
                 </div>
-                {i < 2 && (
-                  <div className="mx-4 hidden md:flex items-center">
-                    <div className="w-8 h-px bg-gradient-to-r from-primary/50 to-secondary/50" />
-                    <ArrowRight size={14} className="text-primary/50" />
-                  </div>
-                )}
+                <div className="text-xs font-bold text-indigo-500 mb-2 tracking-wide">STEP {s.n}</div>
+                <h3 className="font-bold text-lg text-slate-900 mb-2">{s.title}</h3>
+                <p className="text-sm text-slate-500 leading-relaxed">{s.desc}</p>
               </motion.div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Demo Preview — SVG donut chart instead of spinner */}
-      <section className="relative z-20 px-6 py-20 bg-[#0a0a0f]">
-        <div className="max-w-4xl mx-auto">
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}
-            className="glass rounded-2xl p-1 shadow-2xl shadow-primary/10">
-            <div className="glass rounded-xl p-6">
-              <div className="flex gap-2 mb-4">
-                <div className="w-3 h-3 rounded-full bg-red-500/60" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
-                <div className="w-3 h-3 rounded-full bg-green-500/60" />
-              </div>
-              <div className="grid grid-cols-4 gap-3 mb-4">
-                {[
-                  { v: '$1.24M', l: 'Revenue', t: '+12%', c: 'text-emerald-400' },
-                  { v: '2,847', l: 'Users', t: '+28%', c: 'text-emerald-400' },
-                  { v: '34.2%', l: 'Growth', t: '+5%', c: 'text-emerald-400' },
-                  { v: '$436', l: 'Avg Order', t: '-3%', c: 'text-red-400' }
-                ].map((m, i) => (
-                  <motion.div key={i} initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-                    transition={{ delay: 0.3 + i * 0.1 }} className="glass rounded-lg p-3 text-center">
-                    <p className="text-lg font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">{m.v}</p>
-                    <p className="text-[8px] text-slate-500 uppercase">{m.l}</p>
-                    <p className={`text-[9px] font-semibold ${m.c}`}>{m.t}</p>
-                  </motion.div>
-                ))}
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="glass rounded-lg p-4 h-28 flex items-end gap-1">
-                  {[40,65,45,80,60,90,70].map((h, i) => (
-                    <motion.div key={i} initial={{ height: 0 }} whileInView={{ height: `${h}%` }} viewport={{ once: true }}
-                      transition={{ delay: 0.5 + i * 0.05 }} className="flex-1 bg-gradient-to-t from-primary to-secondary/50 rounded-t" />
-                  ))}
-                </div>
-                <div className="glass rounded-lg p-4 h-28 flex items-center justify-center">
-                  <DonutSVG />
-                </div>
-              </div>
-            </div>
-          </motion.div>
-          <div className="text-center mt-8">
-            <button onClick={() => nav('/dashboard')} className="glow-btn rounded-xl px-8 py-3.5 text-sm font-semibold inline-flex items-center gap-2 text-white group">
-              Start Analyzing Your Data <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+          <div className="text-center mt-12">
+            <button onClick={() => nav('/dashboard')} className="bg-slate-900 hover:bg-slate-800 text-white rounded-lg px-8 py-3.5 text-sm font-semibold inline-flex items-center gap-2 transition-all group shadow-lg shadow-slate-900/10">
+              <Sparkles size={16} /> Start Analyzing Your Data <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
         </div>
       </section>
 
-      {/* Team Section — solid bg */}
-      <section className="relative z-20 px-6 py-20 bg-[#0a0a0f]">
+      {/* ─── Team ─── */}
+      <section id="team" className="px-6 py-24 bg-slate-50/50">
         <div className="max-w-4xl mx-auto">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-14">
-            <h2 className="text-3xl font-bold mb-3">
-              Meet the <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Team</span>
-            </h2>
-            <p className="text-sm text-slate-500">Built with passion for GFG Hackfest 2026</p>
+            <p className="text-sm font-semibold text-indigo-600 mb-3 uppercase tracking-wide">Our Team</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-4">Built with passion</h2>
+            <p className="text-base text-slate-500">Crafted for GFG Hackfest 2026</p>
           </motion.div>
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-8">
             {team.map((m, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-                transition={{ delay: i * 0.2 }} className="glass rounded-2xl p-6 text-center glass-hover transition-all duration-300 group">
-                <div className="w-24 h-24 rounded-full mx-auto mb-4 overflow-hidden ring-2 ring-primary/30 ring-offset-2 ring-offset-[#0a0a0f] group-hover:ring-primary/60 transition-all">
-                  <img src={m.img} alt={m.name} className="w-full h-full object-cover" />
+              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                transition={{ delay: i * 0.15 }}
+                className="bg-white border border-slate-100 rounded-2xl p-6 text-center hover:shadow-lg hover:border-slate-200 transition-all duration-300 group">
+                <div className="w-20 h-20 rounded-full mx-auto mb-4 overflow-hidden ring-2 ring-slate-100 group-hover:ring-indigo-200 transition-all">
+                  <img src={m.img} alt={m.name} className="w-full h-full object-cover" loading="lazy" />
                 </div>
-                <h3 className="font-bold text-[15px] mb-0.5">{m.name}</h3>
-                <p className="text-[11px] text-primary/80 font-medium mb-3 h-8">{m.role}</p>
+                <h3 className="font-bold text-base text-slate-900 mb-0.5">{m.name}</h3>
+                <p className="text-sm text-indigo-600 font-medium mb-4">{m.role}</p>
                 <div className="flex items-center justify-center gap-2">
                   {m.github && (
-                    <a href={m.github} target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-white transition-colors p-1.5 glass rounded-lg" title="GitHub">
-                      <Github size={14} />
+                    <a href={m.github} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-900 transition-colors p-1.5 hover:bg-slate-100 rounded-lg" title="GitHub">
+                      <Github size={16} />
                     </a>
                   )}
                   {m.linkedin && (
-                    <a href={m.linkedin} target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-blue-400 transition-colors p-1.5 glass rounded-lg" title="LinkedIn">
-                      <Linkedin size={14} />
+                    <a href={m.linkedin} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-blue-600 transition-colors p-1.5 hover:bg-blue-50 rounded-lg" title="LinkedIn">
+                      <Linkedin size={16} />
                     </a>
                   )}
                   {m.twitter && (
-                    <a href={m.twitter} target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-[#1DA1F2] transition-colors p-1.5 glass rounded-lg" title="Twitter">
-                      <Twitter size={14} />
+                    <a href={m.twitter} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-sky-500 transition-colors p-1.5 hover:bg-sky-50 rounded-lg" title="Twitter">
+                      <Twitter size={16} />
                     </a>
                   )}
                   {m.website && (
-                    <a href={m.website} target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-emerald-400 transition-colors p-1.5 glass rounded-lg" title="Website">
-                      <Globe size={14} />
+                    <a href={m.website} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-emerald-600 transition-colors p-1.5 hover:bg-emerald-50 rounded-lg" title="Website">
+                      <Globe size={16} />
                     </a>
                   )}
                 </div>
@@ -253,17 +272,17 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer — solid bg */}
-      <footer className="relative z-20 border-t border-white/5 py-8 px-6 bg-[#0a0a0f]">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
+      {/* ─── Footer ─── */}
+      <footer className="border-t border-slate-100 py-8 px-6 bg-white">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+            <div className="w-6 h-6 rounded-md bg-slate-900 flex items-center justify-center">
               <Database size={12} className="text-white" />
             </div>
-            <span className="font-bold text-sm">DataMind AI</span>
+            <span className="font-bold text-sm text-slate-900">DataMind AI</span>
           </div>
-          <p className="text-xs text-slate-500">Built for GFG Hackfest 2026</p>
-          <a href="https://github.com/Sne-04/GFG-Hack-1" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-white transition-colors">
+          <p className="text-xs text-slate-400">Built for GFG Hackfest 2026</p>
+          <a href="https://github.com/Sne-04/GFG-Hack-1" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-900 transition-colors">
             <Github size={18} />
           </a>
         </div>

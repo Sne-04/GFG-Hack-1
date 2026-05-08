@@ -1,8 +1,27 @@
 import Papa from 'papaparse'
 
-export function parseCSV(file) {
+/**
+ * Read a File as text using FileReader.
+ * This is a workaround for the macOS/Chrome bug where PapaParse's
+ * internal FileReader fails with "NotReadableError" on drag-and-dropped
+ * files. By reading the text ourselves first, we bypass that issue.
+ */
+function readFileAsText(file) {
   return new Promise((resolve, reject) => {
-    Papa.parse(file, {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = () => reject(new Error('Could not read the file. Please try selecting it using the file picker instead of dragging.'))
+    reader.readAsText(file)
+  })
+}
+
+export async function parseCSV(file) {
+  // Step 1: Read file as text (avoids browser permission bug)
+  const text = await readFileAsText(file)
+
+  // Step 2: Parse the text string with PapaParse
+  return new Promise((resolve, reject) => {
+    Papa.parse(text, {
       header: true,
       skipEmptyLines: true,
       dynamicTyping: true,

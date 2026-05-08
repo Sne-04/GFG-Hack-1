@@ -3,7 +3,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Database, User, Settings as SettingsIcon, CreditCard, Shield, ArrowLeft, Camera, Save, Check, Lock, Eye, EyeOff, Trash2, AlertTriangle, Tag, Loader2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { supabase, upsertProfile, getProfile, activatePlanClient } from '../utils/supabase'
+import { useUser } from '@clerk/clerk-react'
+import { upsertProfile, getProfile, activatePlanClient } from '../utils/supabase'
 import { PLANS, getPlan, formatPrice } from '../utils/quota'
 
 const TABS = [
@@ -15,6 +16,7 @@ const TABS = [
 
 export default function SettingsPage() {
   const { user, plan: userPlan, refreshPlan } = useAuth()
+  const { user: clerkUser } = useUser()
   const [billingPeriod, setBillingPeriod] = useState('monthly')
   const [upgrading, setUpgrading] = useState(null)
   const [couponInputs, setCouponInputs] = useState({ pro: '', enterprise: '' })
@@ -67,7 +69,7 @@ export default function SettingsPage() {
     setSaving(true)
     try {
       // Update auth metadata
-      await supabase.auth.updateUser({ data: { name } })
+      if (clerkUser) await clerkUser.update({ firstName: name })
       // Update profile in DB
       await upsertProfile(user.id, { name, company, role, phone })
       setSaved(true)
@@ -81,20 +83,21 @@ export default function SettingsPage() {
   const handleChangePassword = async () => {
     setPwError('')
     setPwSuccess(false)
-    if (!newPw || !confirmPw) { setPwError('Please fill in all fields'); return }
+    if (!currentPw || !newPw || !confirmPw) { setPwError('Please fill in all fields'); return }
     if (newPw.length < 6) { setPwError('Password must be at least 6 characters'); return }
     if (newPw !== confirmPw) { setPwError('Passwords do not match'); return }
     setSaving(true)
     try {
-      const { error } = await supabase.auth.updateUser({ password: newPw })
-      if (error) throw error
+      if (clerkUser) {
+        await clerkUser.updatePassword({ newPassword: newPw, currentPassword: currentPw })
+      }
       setPwSuccess(true)
       setCurrentPw('')
       setNewPw('')
       setConfirmPw('')
       setTimeout(() => setPwSuccess(false), 3000)
     } catch (err) {
-      setPwError(err.message || 'Failed to change password')
+      setPwError(err.errors?.[0]?.message || err.message || 'Failed to change password')
     }
     setSaving(false)
   }
@@ -127,9 +130,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#08080c] text-slate-200">
+    <div className="min-h-screen bg-black/20 backdrop-blur-md text-slate-200">
       {/* Header */}
-      <div className="border-b border-white/5 bg-[#08080c] sticky top-0 z-20">
+      <div className="border-b border-white/5 bg-black/20 backdrop-blur-md sticky top-0 z-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-4">
           <Link to="/dashboard" className="text-slate-400 hover:text-white transition-colors">
             <ArrowLeft size={18} />
@@ -525,6 +528,22 @@ export default function SettingsPage() {
 
                     <div className="space-y-3 max-w-md">
                       <div>
+                        <label className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold mb-1.5 block">Current Password</label>
+                        <div className="flex items-center glass rounded-lg px-3 focus-within:ring-1 focus-within:ring-primary/40">
+                          <Lock size={13} className="text-slate-500 shrink-0" />
+                          <input
+                            type={showPw ? 'text' : 'password'}
+                            value={currentPw}
+                            onChange={e => setCurrentPw(e.target.value)}
+                            placeholder="Current password"
+                            className="flex-1 bg-transparent py-2.5 px-2 text-sm outline-none text-slate-200 placeholder:text-slate-600"
+                          />
+                          <button type="button" onClick={() => setShowPw(!showPw)} className="text-slate-500 hover:text-slate-300">
+                            {showPw ? <EyeOff size={13} /> : <Eye size={13} />}
+                          </button>
+                        </div>
+                      </div>
+                      <div>
                         <label className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold mb-1.5 block">New Password</label>
                         <div className="flex items-center glass rounded-lg px-3 focus-within:ring-1 focus-within:ring-primary/40">
                           <Lock size={13} className="text-slate-500 shrink-0" />
@@ -535,9 +554,6 @@ export default function SettingsPage() {
                             placeholder="Min 6 characters"
                             className="flex-1 bg-transparent py-2.5 px-2 text-sm outline-none text-slate-200 placeholder:text-slate-600"
                           />
-                          <button type="button" onClick={() => setShowPw(!showPw)} className="text-slate-500 hover:text-slate-300">
-                            {showPw ? <EyeOff size={13} /> : <Eye size={13} />}
-                          </button>
                         </div>
                       </div>
                       <div>

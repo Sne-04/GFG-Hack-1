@@ -1,7 +1,6 @@
 import { checkRateLimit } from './_lib/rateLimit.js'
 import { verifyAuth, AuthError } from './_lib/auth.js'
-
-const TIMEOUT_MS = 30_000 // 30 second hard timeout for OpenAI calls
+import { callLLM, getAvailableProviders } from './_lib/llm.js'
 
 export default async function handler(req, res) {
   // ── CORS headers ───────────────────────────────────────────────
@@ -24,7 +23,7 @@ export default async function handler(req, res) {
     })
   }
 
-  // ── Auth verification (optional — skipped if Supabase not configured) ──
+  // ── Auth verification (Clerk — optional, skipped if not configured) ──
   try {
     await verifyAuth(req)
   } catch (err) {
@@ -35,64 +34,41 @@ export default async function handler(req, res) {
     console.error('[chat] Auth check failed unexpectedly:', err.message)
   }
 
-  // ── API key check ──────────────────────────────────────────────
-  const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) {
-    return res.status(500).json({ error: { message: 'Server API key not configured' } })
-  }
-
   // ── Request validation ─────────────────────────────────────────
   const { model, max_tokens, messages, response_format } = req.body || {}
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: { message: 'Invalid request: messages array required' } })
   }
 
-  // ── OpenAI call with timeout ───────────────────────────────────
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS)
-
+  // ── Multi-LLM call with automatic fallback ─────────────────────
   try {
-    const body = {
-      model: model || 'gpt-4o',
-      max_tokens: Math.min(max_tokens || 4096, 4096),
+    const data = await callLLM({
       messages,
-    }
-    if (response_format) body.response_format = response_format
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(body),
-      signal: controller.signal,
+      maxTokens: Math.min(max_tokens || 4096, 4096),
+      responseFormat: response_format || null,
     })
 
-    clearTimeout(timeoutId)
-    const data = await response.json()
-
-    if (!response.ok) {
-      console.error('[chat] OpenAI error:', response.status, data?.error?.message)
-      return res.status(response.status).json(data)
-    }
-
-    // Log token usage for monitoring
+    // Log token usage and provider for monitoring
+    const provider = data._provider || 'unknown'
+    const usedModel = data._model || 'unknown'
     if (data.usage) {
-      console.log(`[chat] tokens used — prompt:${data.usage.prompt_tokens} completion:${data.usage.completion_tokens} total:${data.usage.total_tokens} ip:${ip}`)
+      console.log(`[chat] ✅ ${provider}/${usedModel} — prompt:${data.usage.prompt_tokens} completion:${data.usage.completion_tokens} total:${data.usage.total_tokens} ip:${ip}`)
     }
 
     return res.status(200).json(data)
 
   } catch (error) {
-    clearTimeout(timeoutId)
-
     if (error.name === 'AbortError') {
-      console.error('[chat] Request timeout after 30s, ip:', ip)
+      console.error('[chat] Request timeout, ip:', ip)
       return res.status(504).json({ error: { message: 'Request timed out. Please try again.' } })
     }
 
-    console.error('[chat] Unexpected error:', error.message)
-    return res.status(500).json({ error: { message: 'Internal server error' } })
+    console.error('[chat] All providers failed:', error.message)
+    return res.status(500).json({
+      error: {
+        message: 'AI service temporarily unavailable. Please try again in a moment.',
+        providers: getAvailableProviders(),
+      }
+    })
   }
 }

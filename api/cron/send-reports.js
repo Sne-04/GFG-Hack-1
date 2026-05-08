@@ -1,12 +1,5 @@
-import { createClient } from '@supabase/supabase-js'
+import { getSQL } from '../_lib/neon.js'
 import { Resend } from 'resend'
-
-function getServiceClient() {
-  const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) throw new Error('Supabase service role not configured')
-  return createClient(url, key)
-}
 
 function calcNextSendAt(frequency, dayOfWeek, dayOfMonth) {
   const now = new Date()
@@ -50,37 +43,25 @@ function buildEmailHtml(dashboard, schedule) {
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
   <div style="max-width:600px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-
-    <!-- Header -->
     <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:28px 32px">
       <div style="color:#fff;font-size:22px;font-weight:700">DataMind AI</div>
       <div style="color:#c4b5fd;font-size:13px;margin-top:4px">Your ${schedule.frequency} report is ready</div>
     </div>
-
-    <!-- Body -->
     <div style="padding:28px 32px">
       <h2 style="margin:0 0 6px;font-size:18px;color:#0f172a">${dashboardName}</h2>
       <p style="margin:0 0 20px;font-size:13px;color:#64748b">${query}</p>
-
       ${kpis.length ? `
-      <!-- KPIs -->
       <p style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;margin-bottom:10px">Key Metrics</p>
       <table width="100%" cellpadding="4" cellspacing="0" style="margin-bottom:24px">
         <tr>${kpiRows}</tr>
       </table>` : ''}
-
       ${insights.length ? `
-      <!-- Insights -->
       <p style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;margin-bottom:8px">AI Insights</p>
       <ul style="margin:0 0 24px;padding-left:16px;list-style:none">${insightItems}</ul>` : ''}
-
-      <!-- CTA -->
       <a href="${dashboardUrl}" style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:10px;font-size:13px;font-weight:600">
         View Full Dashboard →
       </a>
     </div>
-
-    <!-- Footer -->
     <div style="padding:16px 32px;border-top:1px solid #f1f5f9;background:#f8fafc">
       <p style="margin:0;font-size:11px;color:#94a3b8">
         You're receiving this because you set up a ${schedule.frequency} report in DataMind AI.
@@ -93,12 +74,11 @@ function buildEmailHtml(dashboard, schedule) {
 }
 
 export default async function handler(req, res) {
-  // Vercel Cron calls with GET; also allow POST for manual testing
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  // Verify cron secret to prevent unauthorized triggers
+  // Verify cron secret
   const cronSecret = process.env.CRON_SECRET
   if (cronSecret) {
     const authHeader = req.headers['authorization']
@@ -113,22 +93,22 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Email service not configured' })
   }
 
-  const supabase = getServiceClient()
+  const sql = getSQL()
   const resend = new Resend(resendKey)
   const now = new Date().toISOString()
 
-  // Find all due, active reports
-  const { data: dueReports, error: fetchErr } = await supabase
-    .from('scheduled_reports')
-    .select('*, dashboards(id, title, csv_name, query_text, result_json)')
-    .eq('is_active', true)
-    .lte('next_send_at', now)
-    .limit(50)
-
-  if (fetchErr) {
-    console.error('[cron/send-reports] Fetch error:', fetchErr.message)
-    return res.status(500).json({ error: fetchErr.message })
-  }
+  // Find all due, active reports with dashboard data
+  const dueReports = await sql`
+    SELECT sr.*, 
+      json_build_object(
+        'id', d.id, 'title', d.title, 'csv_name', d.csv_name, 
+        'query_text', d.query_text, 'result_json', d.result_json
+      ) as dashboard
+    FROM scheduled_reports sr
+    JOIN dashboards d ON d.id = sr.dashboard_id
+    WHERE sr.is_active = true AND sr.next_send_at <= ${now}
+    LIMIT 50
+  `
 
   if (!dueReports?.length) {
     return res.status(200).json({ sent: 0, message: 'No reports due' })
@@ -138,11 +118,8 @@ export default async function handler(req, res) {
   let failed = 0
 
   for (const schedule of dueReports) {
-    const dashboard = schedule.dashboards
-    if (!dashboard) {
-      console.warn(`[cron/send-reports] Dashboard not found for schedule ${schedule.id}`)
-      continue
-    }
+    const dashboard = schedule.dashboard
+    if (!dashboard) continue
 
     try {
       const dashboardName = dashboard.title || dashboard.csv_name || 'Untitled Dashboard'
@@ -155,12 +132,10 @@ export default async function handler(req, res) {
         html,
       })
 
-      // Update last_sent_at and next_send_at
       const next = calcNextSendAt(schedule.frequency, schedule.day_of_week, schedule.day_of_month)
-      await supabase
-        .from('scheduled_reports')
-        .update({ last_sent_at: now, next_send_at: next })
-        .eq('id', schedule.id)
+      await sql`
+        UPDATE scheduled_reports SET last_sent_at = ${now}, next_send_at = ${next} WHERE id = ${schedule.id}
+      `
 
       console.log(`[cron/send-reports] Sent to ${schedule.recipient_email} for dashboard ${dashboard.id}`)
       sent++

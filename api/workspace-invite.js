@@ -1,13 +1,6 @@
-import { createClient } from '@supabase/supabase-js'
+import { getSQL } from './_lib/neon.js'
 import { Resend } from 'resend'
 import { verifyAuth, AuthError } from './_lib/auth.js'
-
-function getServiceClient() {
-  const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) throw new Error('Supabase service role not configured')
-  return createClient(url, key)
-}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || '*')
@@ -28,17 +21,12 @@ export default async function handler(req, res) {
   }
   if (!user) return res.status(401).json({ error: 'Unauthorized' })
 
-  const supabase = getServiceClient()
+  const sql = getSQL()
 
   // ── DELETE: remove a member ───────────────────────────────────────
   if (req.method === 'DELETE') {
     const { workspace_id, member_id } = req.query
-    // Only workspace owner or the member themselves can remove
-    const { error } = await supabase
-      .from('workspace_members')
-      .delete()
-      .eq('id', member_id)
-    if (error) return res.status(500).json({ error: error.message })
+    await sql`DELETE FROM workspace_members WHERE id = ${member_id}::uuid`
     return res.status(200).json({ success: true })
   }
 
@@ -51,19 +39,15 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'role must be admin, editor, or viewer' })
   }
 
-  // Verify requester is owner or admin of the workspace
-  const { data: membership } = await supabase
-    .from('workspace_members')
-    .select('role')
-    .eq('workspace_id', workspace_id)
-    .eq('user_id', user.id)
-    .single()
-
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('name, owner_id')
-    .eq('id', workspace_id)
-    .single()
+  // Verify requester is owner or admin
+  const memberships = await sql`
+    SELECT role FROM workspace_members WHERE workspace_id = ${workspace_id}::uuid AND user_id = ${user.id}
+  `
+  const workspaces = await sql`
+    SELECT name, owner_id FROM workspaces WHERE id = ${workspace_id}::uuid
+  `
+  const workspace = workspaces[0]
+  const membership = memberships[0]
 
   const isOwner = workspace?.owner_id === user.id
   const isAdmin = membership?.role === 'admin'
@@ -72,28 +56,18 @@ export default async function handler(req, res) {
   }
 
   // Check if already a member
-  const { data: existing } = await supabase
-    .from('workspace_members')
-    .select('id')
-    .eq('workspace_id', workspace_id)
-    .eq('invited_email', email)
-    .single()
-
-  if (existing) return res.status(409).json({ error: 'User already invited' })
+  const existing = await sql`
+    SELECT id FROM workspace_members WHERE workspace_id = ${workspace_id}::uuid AND invited_email = ${email}
+  `
+  if (existing.length > 0) return res.status(409).json({ error: 'User already invited' })
 
   // Insert pending member record
-  const { data: member, error: insertErr } = await supabase
-    .from('workspace_members')
-    .insert({
-      workspace_id,
-      invited_email: email,
-      role,
-      // user_id left null until they accept
-    })
-    .select()
-    .single()
-
-  if (insertErr) return res.status(500).json({ error: insertErr.message })
+  const rows = await sql`
+    INSERT INTO workspace_members (workspace_id, invited_email, role)
+    VALUES (${workspace_id}::uuid, ${email}, ${role})
+    RETURNING *
+  `
+  const member = rows[0]
 
   // Send invitation email
   const resendKey = process.env.RESEND_API_KEY

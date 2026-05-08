@@ -77,7 +77,7 @@ export default function OnboardingTour() {
             transition={{ type: 'spring', stiffness: 300, damping: 28 }}
             className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none"
           >
-            <div className="bg-[#0e0e18] border border-white/10 rounded-2xl shadow-2xl w-full max-w-md pointer-events-auto overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-md pointer-events-auto overflow-hidden">
               {/* Top gradient strip */}
               <div className={`h-1 w-full bg-gradient-to-r ${current.color.replace('/20', '').replace('/5', '/60')}`} />
 
@@ -87,19 +87,19 @@ export default function OnboardingTour() {
                   <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${current.color} flex items-center justify-center`}>
                     <Icon size={22} className={current.iconColor} />
                   </div>
-                  <button onClick={dismiss} aria-label="Close tour" className="text-slate-500 hover:text-slate-300 transition-colors p-1">
+                  <button onClick={dismiss} aria-label="Close tour" className="text-slate-400 hover:text-slate-700 transition-colors p-1">
                     <X size={16} />
                   </button>
                 </div>
 
                 {/* Content */}
-                <h2 className="text-lg font-bold text-white mb-2">{current.title}</h2>
-                <p className="text-sm text-slate-400 leading-relaxed mb-4">{current.description}</p>
+                <h2 className="text-lg font-bold text-slate-900 mb-2">{current.title}</h2>
+                <p className="text-sm text-slate-500 leading-relaxed mb-4">{current.description}</p>
 
                 {/* Tip */}
-                <div className="bg-white/[0.03] border border-white/5 rounded-xl p-3 flex gap-2">
-                  <ChevronRight size={14} className="text-primary shrink-0 mt-0.5" />
-                  <p className="text-xs text-slate-400">{current.tip}</p>
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex gap-2">
+                  <ChevronRight size={14} className="text-indigo-500 shrink-0 mt-0.5" />
+                  <p className="text-xs text-slate-500">{current.tip}</p>
                 </div>
               </div>
 
@@ -112,16 +112,16 @@ export default function OnboardingTour() {
                       key={i}
                       onClick={() => setStep(i)}
                       aria-label={`Go to step ${i + 1}`}
-                      className={`h-1.5 rounded-full transition-all duration-300 ${i === step ? 'w-5 bg-primary' : 'w-1.5 bg-white/20 hover:bg-white/40'}`}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${i === step ? 'w-5 bg-slate-900' : 'w-1.5 bg-slate-200 hover:bg-slate-300'}`}
                     />
                   ))}
                 </div>
 
                 <div className="flex gap-2">
-                  <button onClick={dismiss} className="text-xs text-slate-500 hover:text-slate-300 transition-colors px-3 py-2">
+                  <button onClick={dismiss} className="text-xs text-slate-400 hover:text-slate-700 transition-colors px-3 py-2">
                     Skip
                   </button>
-                  <button onClick={next} className="glow-btn rounded-lg px-4 py-2 text-xs font-semibold text-white flex items-center gap-1.5">
+                  <button onClick={next} className="bg-slate-900 hover:bg-slate-800 text-white rounded-lg px-4 py-2 text-xs font-semibold flex items-center gap-1.5 transition-colors">
                     {step === STEPS.length - 1 ? "Let's go!" : 'Next'}
                     <ArrowRight size={12} />
                   </button>
