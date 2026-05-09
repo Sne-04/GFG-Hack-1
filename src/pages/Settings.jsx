@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { Database, User, Settings as SettingsIcon, CreditCard, Shield, ArrowLeft, Camera, Save, Check, Lock, Eye, EyeOff, Trash2, AlertTriangle, Tag, Loader2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useUser } from '@clerk/clerk-react'
-import { upsertProfile, getProfile, activatePlanClient } from '../utils/supabase'
+import { upsertProfile, getProfile, activatePlanClient } from '../utils/db'
 import { PLANS, getPlan, formatPrice } from '../utils/quota'
 
 const TABS = [

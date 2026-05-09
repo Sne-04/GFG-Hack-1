@@ -1,10 +1,9 @@
 /**
- * Database client module — replaces Supabase client.
+ * Database client module — Neon PostgreSQL via API routes.
  * 
- * All database operations now go through API routes that use Neon PostgreSQL.
+ * All database operations go through /api/* routes backed by Neon.
  * Auth is handled by Clerk (tokens attached automatically via ClerkProvider).
- * 
- * Client-side code no longer has direct DB access — it goes through /api/* routes.
+ * Client-side code has no direct DB access.
  */
 
 // ── Auth helper — get Clerk token for API calls ──

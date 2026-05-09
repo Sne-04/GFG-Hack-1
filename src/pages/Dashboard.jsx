@@ -24,11 +24,11 @@ import { parseXLSX } from '../utils/xlsxParser'
 import { queryOpenAI } from '../utils/openaiApi'
 import { buildPreComputedContext } from '../utils/dataEngine'
 import { validateAndFixResponse } from '../utils/responseValidator'
-import { saveQuery, getRecentQueries, saveDashboard, incrementDailyUsage, getDashboardCount } from '../utils/supabase'
+import { saveQuery, getRecentQueries, saveDashboard, incrementDailyUsage, getDashboardCount } from '../utils/db'
 import { checkQueryQuota, getPlanLimits, checkDashboardQuota } from '../utils/quota'
 
 export default function Dashboard() {
-  const { user, supabaseEnabled, plan, usage, refreshPlan } = useAuth()
+  const { user, dbEnabled, plan, usage, refreshPlan } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const [upgradeBanner, setUpgradeBanner] = useState(false)
   const [csvData, setCsvData] = useState(null)
@@ -76,7 +76,7 @@ export default function Dashboard() {
       sessionStorage.removeItem('datamind-restore')
     }
 
-    if (user && supabaseEnabled) {
+    if (user && dbEnabled) {
       // Free plan shows last 20 queries; Pro/Enterprise show more
       getRecentQueries(user.id, 20).then(queries => {
         if (queries.length) {
@@ -84,7 +84,7 @@ export default function Dashboard() {
         }
       }).catch(() => {})
     }
-  }, [user, supabaseEnabled])
+  }, [user, dbEnabled])
 
   // Apply dark/light mode to document
   useEffect(() => {
@@ -166,7 +166,7 @@ export default function Dashboard() {
     if (!csvData) { setError('Please upload a CSV or Excel file first'); return }
 
     // Check quota before querying
-    if (user && supabaseEnabled) {
+    if (user && dbEnabled) {
       const quota = checkQueryQuota(usage, plan)
       if (!quota.allowed) {
         setError(quota.reason)
@@ -200,7 +200,7 @@ export default function Dashboard() {
         setResult({ ...validated, query })
         setSaved(false)
         // Save query to DB and track usage if authenticated
-        if (user && supabaseEnabled) {
+        if (user && dbEnabled) {
           saveQuery(user.id, query, validated, csvFile).catch(() => {})
           incrementDailyUsage(user.id).then(() => refreshPlan(user.id)).catch(() => {})
         }
@@ -211,7 +211,7 @@ export default function Dashboard() {
     setLoading(false)
     // Auto-scroll to results
     setTimeout(() => outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300)
-  }, [csvData, schema, activeFilters, user, supabaseEnabled, csvFile, plan, usage, refreshPlan])
+  }, [csvData, schema, activeFilters, user, dbEnabled, csvFile, plan, usage, refreshPlan])
 
   const handleFilterChange = useCallback((col, val) => {
     setActiveFilters(p => {
@@ -269,7 +269,7 @@ export default function Dashboard() {
           <button onClick={clearData} className="w-full glow-btn rounded-lg py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 text-white">
             <Plus size={14}/>New Dashboard
           </button>
-          {user && supabaseEnabled && (
+          {user && dbEnabled && (
             <Link to="/dashboards" className="w-full flex items-center justify-center gap-1.5 glass rounded-lg py-2 text-xs text-slate-400 hover:text-primary hover:border-primary/30 transition-all">
               <Database size={12}/>My Dashboards
             </Link>
@@ -277,7 +277,7 @@ export default function Dashboard() {
         </div>
 
         {/* Quota badge */}
-        {user && supabaseEnabled && (() => {
+        {user && dbEnabled && (() => {
           const limits = getPlanLimits(plan)
           const used = usage?.today_count || 0
           const limit = limits.queriesPerDay
@@ -465,7 +465,7 @@ export default function Dashboard() {
                       <div className="w-1.5 h-1.5 rounded-full bg-red-400"/> {a}
                     </span>
                   ))}
-                  {user && supabaseEnabled && (
+                  {user && dbEnabled && (
                     <button onClick={async () => {
                       try {
                         // Fetch real dashboard count then enforce free plan limit (3)

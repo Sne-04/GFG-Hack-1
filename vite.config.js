@@ -116,7 +116,7 @@ export default defineConfig(({ mode }) => {
                     res.writeHead(400, { 'Content-Type': 'application/json' })
                     return res.end(JSON.stringify({ error: 'Invalid free activation coupon' }))
                   }
-                  // In dev: skip Supabase update, just confirm success
+                  // In dev: skip DB update, just confirm success
                   res.writeHead(200, { 'Content-Type': 'application/json' })
                   return res.end(JSON.stringify({ success: true, plan, billing, message: 'Dev: plan activated free' }))
                 }

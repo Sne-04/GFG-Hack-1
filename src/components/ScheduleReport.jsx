@@ -7,7 +7,7 @@ const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'F
 /**
  * ScheduleReport — modal for managing email report schedules for a saved dashboard
  * Props:
- *   dashboardId: string (Supabase dashboard UUID)
+ *   dashboardId: string (dashboard UUID)
  *   darkMode: boolean
  *   userEmail: string (pre-fill recipient)
  *   onClose: () => void

@@ -1,17 +1,16 @@
 /**
- * AuthContext — now powered by Clerk.
+ * AuthContext — powered by Clerk + Neon PostgreSQL.
  * Provides user, plan, usage, and auth state to the entire app.
- * Replaces the old Supabase auth context.
  */
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { useUser, useAuth as useClerkAuth } from '@clerk/clerk-react'
-import { getProfile, getDailyUsage } from '../utils/supabase'
+import { getProfile, getDailyUsage } from '../utils/db'
 
 const AuthContext = createContext({
   user: null,
   loading: true,
   clerkEnabled: true,
-  supabaseEnabled: true,
+  dbEnabled: true,
   plan: 'free',
   usage: null,
   refreshPlan: () => {},
@@ -24,7 +23,7 @@ export function AuthProvider({ children }) {
   const [plan, setPlan] = useState('free')
   const [usage, setUsage] = useState(null)
 
-  // Normalize Clerk user to match old Supabase user shape for backward compat
+  // Normalize Clerk user shape for backward compat
   const user = clerkUser ? {
     id: clerkUser.id,
     email: clerkUser.primaryEmailAddress?.emailAddress || '',
@@ -86,7 +85,7 @@ export function AuthProvider({ children }) {
       loading: !isLoaded,
       clerkEnabled: true,
       // Backward compat: maps to clerkEnabled so AuthGuard works properly
-      supabaseEnabled: true,
+      dbEnabled: true,
       plan,
       usage,
       refreshPlan,

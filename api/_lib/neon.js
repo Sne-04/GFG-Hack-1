@@ -1,6 +1,5 @@
 /**
  * Neon PostgreSQL serverless client.
- * Replaces Supabase for all database operations.
  * Uses @neondatabase/serverless for Vercel Edge/Serverless compatibility.
  */
 import { neon } from '@neondatabase/serverless'

@@ -10,7 +10,7 @@ import {
   deleteDashboard,
   renameDashboard,
   generateShareToken,
-} from '../utils/supabase'
+} from '../utils/db'
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -25,7 +25,7 @@ function timeAgo(dateStr) {
 }
 
 export default function Dashboards() {
-  const { user, supabaseEnabled } = useAuth()
+  const { user, dbEnabled } = useAuth()
   const navigate = useNavigate()
   const [dashboards, setDashboards] = useState([])
   const [loading, setLoading] = useState(true)
@@ -35,12 +35,12 @@ export default function Dashboards() {
   const [filter, setFilter] = useState('all') // 'all' | 'favorites'
 
   const load = useCallback(async () => {
-    if (!user || !supabaseEnabled) { setLoading(false); return }
+    if (!user || !dbEnabled) { setLoading(false); return }
     setLoading(true)
     const data = await getSavedDashboards(user.id, 50)
     setDashboards(data)
     setLoading(false)
-  }, [user, supabaseEnabled])
+  }, [user, dbEnabled])
 
   useEffect(() => { load() }, [load])
 
@@ -72,7 +72,7 @@ export default function Dashboards() {
         const link = `${window.location.origin}/shared/${token}`
         setShareState(p => ({ ...p, [id]: { loading: false, link, copied: false } }))
       } else {
-        // Supabase missing share_token column — show a friendly message
+        // DB missing share_token column — show a friendly message
         setShareState(p => ({ ...p, [id]: { loading: false, error: 'Sharing requires the share_token column in your dashboards table.' } }))
       }
     } catch {
@@ -142,7 +142,7 @@ export default function Dashboards() {
         )}
 
         {/* Not signed in */}
-        {!loading && !supabaseEnabled && (
+        {!loading && !dbEnabled && (
           <div className="text-center py-24 max-w-sm mx-auto">
             <div className="w-20 h-20 mx-auto bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center mb-6 shadow-sm">
               <Database size={32} className="text-slate-400" />
@@ -154,7 +154,7 @@ export default function Dashboards() {
         )}
 
         {/* Empty state */}
-        {!loading && supabaseEnabled && visible.length === 0 && (
+        {!loading && dbEnabled && visible.length === 0 && (
           <div className="text-center py-24 max-w-sm mx-auto">
             <div className="w-20 h-20 mx-auto bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center mb-6 shadow-sm">
               <BarChart2 size={32} className="text-slate-400" />

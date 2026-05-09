@@ -6,7 +6,7 @@ import KPICard from '../components/KPICard'
 import ChartCard from '../components/ChartCard'
 import DynamicChart from '../components/DynamicChart'
 import InsightBanner from '../components/InsightBanner'
-import { getDashboardByToken } from '../utils/supabase'
+import { getDashboardByToken } from '../utils/db'
 
 export default function SharedDashboard() {
   const { token } = useParams()

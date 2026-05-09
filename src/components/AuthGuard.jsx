@@ -2,10 +2,10 @@ import { useAuth } from '../contexts/AuthContext'
 import { Navigate } from 'react-router-dom'
 
 export default function AuthGuard({ children }) {
-  const { user, loading, supabaseEnabled } = useAuth()
+  const { user, loading, dbEnabled } = useAuth()
 
-  // If Supabase is not configured, allow access (dev/demo mode)
-  if (!supabaseEnabled) return children
+  // If DB is not configured, allow access (dev/demo mode)
+  if (!dbEnabled) return children
 
   // Dev-only bypass: set localStorage key to skip auth in local development
   if (import.meta.env.DEV && localStorage.getItem('datamind-dev-bypass') === 'true') return children

@@ -9,7 +9,7 @@ const SIZES = [
 
 /**
  * EmbedCode — modal that shows <iframe> embed code for a saved dashboard
- * dashboardId: Supabase dashboard UUID (null = not saved yet)
+ * dashboardId: Dashboard UUID (null = not saved yet)
  */
 export default function EmbedCode({ dashboardId, darkMode, onClose }) {
   const [copied, setCopied]   = useState(false)

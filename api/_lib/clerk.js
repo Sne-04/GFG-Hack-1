@@ -1,6 +1,6 @@
 /**
  * Clerk auth verification for Vercel serverless API routes.
- * Replaces the old Supabase JWT verification.
+ * Clerk JWT verification for Vercel serverless API routes.
  * 
  * Verifies the Clerk session token from the Authorization header.
  */

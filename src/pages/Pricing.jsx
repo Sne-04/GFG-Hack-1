@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { Check, X, Zap, Crown, Building2, ArrowRight, Database, Sparkles, Tag, Loader2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { PLANS, formatPrice } from '../utils/quota'
-import { activatePlanClient } from '../utils/supabase'
+import { activatePlanClient } from '../utils/db'
 
 export default function Pricing() {
   const { user, refreshPlan } = useAuth()

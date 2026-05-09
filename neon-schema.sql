@@ -1,6 +1,5 @@
 -- DataMind AI — Neon PostgreSQL Database Schema
 -- Run this in your Neon SQL Editor to set up the required tables.
--- This replaces the old Supabase schema.
 
 -- Enable UUID generation
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
