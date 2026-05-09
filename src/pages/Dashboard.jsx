@@ -104,10 +104,17 @@ export default function Dashboard() {
    * handleUpload accepts either:
    *   { name, ext, text }    — CSV already read into memory by CSVUpload
    *   { name, ext, buffer }  — Excel already read into ArrayBuffer by CSVUpload
+   *   { name, ext, error }   — CSVUpload couldn't read the file
    *   File object             — legacy fallback (e.g. from loadDemoData)
    */
   const handleUpload = useCallback(async (fileData) => {
     try {
+      // Handle CSVUpload error case
+      if (fileData?.error) {
+        setError(`Upload failed: ${fileData.error}`)
+        return
+      }
+
       let parsed, fileName
 
       if (fileData instanceof File) {
@@ -128,7 +135,7 @@ export default function Dashboard() {
         const { parseCSVText } = await import('../utils/csvParser')
         parsed = await parseCSVText(fileData.text)
       } else {
-        throw new Error('Invalid file data')
+        throw new Error('Unrecognized file format')
       }
 
       setCsvData(parsed)
