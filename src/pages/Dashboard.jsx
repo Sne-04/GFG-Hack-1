@@ -100,21 +100,45 @@ export default function Dashboard() {
 
   const themeColors = { indigo: '#6366f1', emerald: '#10b981' }
 
-  const handleUpload = useCallback(async (file) => {
+  /**
+   * handleUpload accepts either:
+   *   { name, ext, text }    — CSV already read into memory by CSVUpload
+   *   { name, ext, buffer }  — Excel already read into ArrayBuffer by CSVUpload
+   *   File object             — legacy fallback (e.g. from loadDemoData)
+   */
+  const handleUpload = useCallback(async (fileData) => {
     try {
-      const ext = file.name.split('.').pop().toLowerCase()
-      const parsed = (ext === 'xlsx' || ext === 'xls')
-        ? await parseXLSX(file)
-        : await parseCSV(file)
+      let parsed, fileName
+
+      if (fileData instanceof File) {
+        // Legacy path: raw File object (demo data, etc.)
+        fileName = fileData.name
+        const ext = fileName.split('.').pop().toLowerCase()
+        parsed = (ext === 'xlsx' || ext === 'xls')
+          ? await parseXLSX(fileData)
+          : await parseCSV(fileData)
+      } else if (fileData.buffer) {
+        // Pre-read Excel buffer from CSVUpload
+        fileName = fileData.name
+        const { parseXLSXFromBuffer } = await import('../utils/xlsxParser')
+        parsed = parseXLSXFromBuffer(fileData.buffer)
+      } else if (fileData.text) {
+        // Pre-read CSV text from CSVUpload
+        fileName = fileData.name
+        const { parseCSVText } = await import('../utils/csvParser')
+        parsed = await parseCSVText(fileData.text)
+      } else {
+        throw new Error('Invalid file data')
+      }
+
       setCsvData(parsed)
-      setCsvFile(file.name)
+      setCsvFile(fileName)
       setSchema(getSchema(parsed.columns, parsed.data))
       setResult(null)
       setError(null)
     } catch (e) {
       console.error('File parsing error:', e)
-      // Just show the actual error to the user instead of masking it with drag-and-drop security guesses
-      setError(`Upload failed: ${e?.message || e?.name || 'Please try again.'}`)
+      setError(`Upload failed: ${e?.message || 'Please try again.'}`)
     }
   }, [])
 
@@ -122,8 +146,8 @@ export default function Dashboard() {
     try {
       const response = await fetch('/demo_sales.csv')
       const text = await response.text()
-      const file = new File([text], 'demo_sales.csv', { type: 'text/csv' })
-      handleUpload(file)
+      // Pass as pre-read text, same shape as CSVUpload
+      handleUpload({ name: 'demo_sales.csv', ext: 'csv', text })
     } catch (e) {
       console.error(e)
       setError(`Demo Error: ${e.message}`)

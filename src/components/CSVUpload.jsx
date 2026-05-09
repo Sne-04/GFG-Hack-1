@@ -1,12 +1,22 @@
 import { useCallback } from 'react'
-import { Upload, FileSpreadsheet } from 'lucide-react'
+import { Upload } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { checkFileSizeQuota } from '../utils/quota'
+import { readFileAsText, readFileAsArrayBuffer } from '../utils/csvParser'
 
+/**
+ * CSVUpload component.
+ * 
+ * CRITICAL: File reading MUST happen synchronously within the event handler
+ * (drop / change). If we pass the File object to a parent via setState and
+ * read it later, macOS Chrome will revoke the reference and throw
+ * "NotReadableError". The fix is to read the file into memory HERE, then
+ * pass the {name, text/buffer, ext} to the parent.
+ */
 export default function CSVUpload({ onUpload, compact = false }) {
   const { plan } = useAuth()
 
-  const handleFile = useCallback((file) => {
+  const processFile = useCallback(async (file) => {
     if (!file) return
     const ext = file.name.split('.').pop().toLowerCase()
     if (!['csv', 'xlsx', 'xls'].includes(ext)) {
@@ -19,14 +29,34 @@ export default function CSVUpload({ onUpload, compact = false }) {
       alert(sizeCheck.reason)
       return
     }
-    onUpload(file)
+
+    try {
+      // Read the file IMMEDIATELY while we still have the browser reference
+      if (ext === 'xlsx' || ext === 'xls') {
+        const buffer = await readFileAsArrayBuffer(file)
+        onUpload({ name: file.name, ext, buffer })
+      } else {
+        const text = await readFileAsText(file)
+        onUpload({ name: file.name, ext, text })
+      }
+    } catch (err) {
+      // Fallback: if reading still fails, pass the raw File as last resort
+      console.warn('Immediate file read failed, passing raw File:', err)
+      onUpload(file)
+    }
   }, [onUpload, plan])
 
   const onDrop = useCallback((e) => {
     e.preventDefault()
     const file = e.dataTransfer?.files?.[0]
-    handleFile(file)
-  }, [handleFile])
+    processFile(file)
+  }, [processFile])
+
+  const onChange = useCallback((e) => {
+    processFile(e.target.files?.[0])
+    // Reset so same file can be re-selected
+    e.target.value = ''
+  }, [processFile])
 
   if (compact) {
     return (
@@ -37,7 +67,7 @@ export default function CSVUpload({ onUpload, compact = false }) {
       >
         <Upload size={16} className="mx-auto mb-1 text-slate-400 group-hover:text-primary transition-colors"/>
         <span className="text-[10px] text-slate-600 font-medium">CSV / Excel</span>
-        <input type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={e => handleFile(e.target.files?.[0])}/>
+        <input type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={onChange}/>
       </label>
     )
   }
@@ -56,7 +86,7 @@ export default function CSVUpload({ onUpload, compact = false }) {
         Max size: {plan === 'enterprise' ? '500MB' : plan === 'pro' ? '100MB' : '10MB'}
         {plan === 'free' && <a href="/pricing" className="text-primary ml-1 hover:underline font-semibold">Upgrade for larger files →</a>}
       </p>
-      <input type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={e => handleFile(e.target.files?.[0])}/>
+      <input type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={onChange}/>
     </label>
   )
 }

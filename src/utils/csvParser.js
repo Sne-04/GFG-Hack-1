@@ -1,25 +1,35 @@
 import Papa from 'papaparse'
 
 /**
- * Read a File as text using FileReader.
- * This is a workaround for the macOS/Chrome bug where PapaParse's
- * internal FileReader fails with "NotReadableError" on drag-and-dropped
- * files. By reading the text ourselves first, we bypass that issue.
+ * Read a File object into a text string immediately.
+ * Must be called synchronously from the event handler that received the file,
+ * before any async gap, or the browser may revoke the file reference.
  */
-function readFileAsText(file) {
+export function readFileAsText(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => resolve(reader.result)
-    reader.onerror = () => reject(new Error('Could not read the file. Please try selecting it using the file picker instead of dragging.'))
+    reader.onerror = () => reject(new Error('Could not read the file. Please try again.'))
     reader.readAsText(file)
   })
 }
 
-export async function parseCSV(file) {
-  // Step 1: Read file as text (avoids browser permission bug)
-  const text = await readFileAsText(file)
+/**
+ * Read a File object as an ArrayBuffer (for Excel parsing).
+ */
+export function readFileAsArrayBuffer(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = () => reject(new Error('Could not read the file. Please try again.'))
+    reader.readAsArrayBuffer(file)
+  })
+}
 
-  // Step 2: Parse the text string with PapaParse
+/**
+ * Parse CSV text string (NOT a File object) with PapaParse.
+ */
+export function parseCSVText(text) {
   return new Promise((resolve, reject) => {
     Papa.parse(text, {
       header: true,
@@ -39,6 +49,15 @@ export async function parseCSV(file) {
       error: (err) => reject(err)
     })
   })
+}
+
+/**
+ * Legacy wrapper: parseCSV accepts a File, reads it, then parses.
+ * Prefer using readFileAsText + parseCSVText separately for reliability.
+ */
+export async function parseCSV(file) {
+  const text = await readFileAsText(file)
+  return parseCSVText(text)
 }
 
 export function getSchema(columns, data) {
